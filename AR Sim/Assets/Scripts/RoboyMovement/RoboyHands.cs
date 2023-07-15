@@ -28,14 +28,9 @@ public class RoboyHands : MonoBehaviour
     /// This value is required in order to get smooth transitions
     /// </summary>
     public float lerpSpeed = 0.1f;
-
-    [SerializeField] public Transform roboyLeftHand;
-    [SerializeField] public Transform roboyRightHand;
-    
-    [SerializeField] private String leftHandVisualizer;
-    [SerializeField] private String rightHandVisualizer;
-    [SerializeField] protected Transform avatarLeftHand;
-    [SerializeField] protected Transform avatarRightHand;
+        
+    [SerializeField] protected Transform leftHandIKTarget;
+    [SerializeField] protected Transform rightHandIKTarget;
 
     [SerializeField] List<InputSourceType> supportedInputSourceTypes;
     [SerializeField] float leftHandRotationZOffset = 90;
@@ -52,7 +47,6 @@ public class RoboyHands : MonoBehaviour
 
     protected Quaternion initialAvatarLeftHandRotation;
     protected Quaternion initialAvatarRightHandRotation;
-    public Transform playerLeftHand, playerRightHand;
     
     protected float timeSinceLastSearch;
     protected Vector3 leftHandTargetPosition, rightHandTargetPosition;
@@ -70,8 +64,7 @@ public class RoboyHands : MonoBehaviour
         get => handOffset;
         set => handOffset = value;
     }
-    public Transform PlayerLeftHand => playerLeftHand;
-    public Transform PlayerRightHand => playerRightHand;
+
     public GameObject LeftGrab
     {
         get => leftGrab;
@@ -96,8 +89,8 @@ public class RoboyHands : MonoBehaviour
     protected virtual void Start()
     {
         ikcontrol = GetComponent<IKControl>();
-        initialAvatarLeftHandRotation = Quaternion.Inverse(transform.rotation) * avatarLeftHand.rotation;
-        initialAvatarRightHandRotation = Quaternion.Inverse(transform.rotation) * avatarRightHand.rotation;
+        initialAvatarLeftHandRotation = Quaternion.Inverse(transform.rotation) * leftHandIKTarget.rotation;
+        initialAvatarRightHandRotation = Quaternion.Inverse(transform.rotation) * rightHandIKTarget.rotation;
 
         if (supportedInputSourceTypes.Count == 0)
         {
@@ -133,6 +126,14 @@ public class RoboyHands : MonoBehaviour
 
         HandsFollowing();
 
+        if (Input.GetMouseButton(0))
+        {
+            GetComponentInChildren<Animator>().SetBool("grab_left", true);
+        }
+        else
+        {
+            GetComponentInChildren<Animator>().SetBool("grab_left", false);
+        }
     }
 
     /// <summary>
@@ -157,8 +158,11 @@ public class RoboyHands : MonoBehaviour
                     {
                         // Debug.Log("Spatial pointer PositionData: " + interactionMapping.PositionData);
                         // Debug.Log("Spatial pointer RotationData: " + interactionMapping.RotationData);
-                        avatarLeftHand.position = interactionMapping.PositionData;
-                        avatarLeftHand.rotation = interactionMapping.RotationData * Quaternion.Euler(Vector3.forward * leftHandRotationZOffset);
+                        if (controller.ControllerHandedness == Microsoft.MixedReality.Toolkit.Utilities.Handedness.Left)
+                        {
+                            leftHandIKTarget.position = interactionMapping.PositionData;
+                            leftHandIKTarget.rotation = interactionMapping.RotationData * Quaternion.Euler(Vector3.forward * leftHandRotationZOffset);
+                        }
                     }
 
                     if (interactionMapping.InputType == DeviceInputType.SpatialGrip)
