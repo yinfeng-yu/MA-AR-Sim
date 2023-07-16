@@ -142,13 +142,13 @@ public class NetworkMessage
         }
 
 
-        f = MyNetworkUtilities.MyAddress;
+        f = NetworkUtilities.MyAddress;
         ti = Math.Round(Time.realtimeSinceStartup, 3);
         d = data;
         ty = (short)type;
-        a = MyTransmission.instance.appKey;
-        p = MyTransmission.instance.privateKey;
-        pl = MyTransmission.instance.platform;
+        a = TransmissionManager.instance.appKey;
+        p = TransmissionManager.instance.privateKey;
+        pl = TransmissionManager.instance.platform;
     }
 }
 
@@ -184,10 +184,10 @@ public class StreamRequestMessage : NetworkMessage
 public class StreamMessage : ByteArrayMessage
 {
     //Constructors:
-    public StreamMessage(StreamChunkMetaData metadata, byte[] values) : base(values)
+    public StreamMessage(StreamDataHeader header, byte[] values) : base(values)
     {
         ty = (short)NetworkMessageType.StreamMessage;
-        d = JsonUtility.ToJson(metadata);
+        d = JsonUtility.ToJson(header);
         v = values;
     }
 }

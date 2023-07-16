@@ -11,7 +11,7 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
-public static class MyNetworkUtilities
+public static class NetworkUtilities
 {
     //Public Properties:
     public static string MyAddress
@@ -76,6 +76,11 @@ public static class MyNetworkUtilities
         }
 
         return output;
+    }
+
+    public static T UnpackMessage<T>(string rawMessage)
+    {
+        return JsonUtility.FromJson<T>(rawMessage);
     }
 
     //Private Variables:

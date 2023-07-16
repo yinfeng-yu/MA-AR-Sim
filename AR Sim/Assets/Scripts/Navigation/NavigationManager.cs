@@ -43,7 +43,7 @@ public class NavigationManager : MonoBehaviour
             m_reachedTarget = true;
             m_navMeshAgent.enabled = false;
 
-            NotificationManager.instance.NotifyArrived(m_targetStr);
+            // NotificationManager.instance.NotifyArrived(m_targetStr);
         }
     }
 
