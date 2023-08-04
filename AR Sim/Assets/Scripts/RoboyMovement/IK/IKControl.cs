@@ -14,6 +14,11 @@ public class IKControl : MonoBehaviour {
 
     public Transform rightHandObj = null;
     public Transform leftHandObj = null;
+
+    [Range(0f, 1f)]
+    [SerializeField] float lookAtWeight = 1f;
+
+    [SerializeField] float lookAtDistance = 100f;
     
 
     // private Vector3 rightHandPos;
@@ -37,8 +42,10 @@ public class IKControl : MonoBehaviour {
                 // Set the look target position, if one has been assigned
                 if(moveHead)
                 {
-                    animator.SetLookAtWeight(1);
-                    animator.SetLookAtPosition(new Vector3(0f, Camera.main.transform.forward.y * 100f, 0f));
+                    animator.SetLookAtWeight(lookAtWeight);
+                    // animator.SetLookAtPosition(new Vector3(0f, Camera.main.transform.forward.y * lookAtDistance, 0f));
+                    animator.SetLookAtPosition(Camera.main.transform.forward * lookAtDistance);
+                    // animator.SetLookAtPosition(lookAtTransform.position);
                     
                 }    
 

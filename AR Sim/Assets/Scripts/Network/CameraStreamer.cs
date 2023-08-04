@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 
 public class CameraStreamer : MonoBehaviour
@@ -10,7 +11,7 @@ public class CameraStreamer : MonoBehaviour
     /// Quality of video streaming
     /// </summary>
     [Range(1, 100)]
-    public int quality = 50;
+    public int quality = 10;
 
     /// <summary>
     /// Frequency of streaming message (FPS)
@@ -27,6 +28,11 @@ public class CameraStreamer : MonoBehaviour
     private Texture2D texture2D = null;
     private float interval = 1f / 24;
 
+    private int streamId = 0;
+    private int maxStreamId = int.MaxValue;
+
+    public TextMeshProUGUI tmp;
+
     public enum CameraView
     {
         FirstPerson,
@@ -39,8 +45,10 @@ public class CameraStreamer : MonoBehaviour
     void Start()
     {
         // Camera initialization
-        fpTex = new RenderTexture(Screen.width, Screen.height, 24);
-        tpTex = new RenderTexture(Screen.width, Screen.height, 24);
+        fpTex = new RenderTexture(640, 480, 24);
+        // fpTex = new RenderTexture(Screen.width, Screen.height, 24);
+        tpTex = new RenderTexture(640, 480, 24);
+        // tpTex = new RenderTexture(Screen.width, Screen.height, 24);
 
         fpTex.enableRandomWrite = true;
         tpTex.enableRandomWrite = true;
@@ -56,12 +64,11 @@ public class CameraStreamer : MonoBehaviour
     {
         if (interval > 0)
         {
-            // Debug.Log(interval);
             interval -= Time.deltaTime;
         }
         else
         {
-            SendTextureAsync();
+            SendTexture();
             interval = 1f / frequency;
         }
     }
@@ -81,13 +88,14 @@ public class CameraStreamer : MonoBehaviour
     public void SetCameraView(CameraView a_cameraView)
     {
         cameraView = a_cameraView;
+
     }
 
-    private void SendTextureAsync()
+    private void SendTexture()
     {
         // Read screen render texture
         int width = 0, height = 0;
-        
+
         switch (cameraView)
         {
             case CameraView.FirstPerson:
@@ -107,11 +115,42 @@ public class CameraStreamer : MonoBehaviour
         texture2D.ReadPixels(new Rect(0, 0, width, height), 0, 0);
         RenderTexture.active = null;
 
-        //±àÂë³Éjpg
+        // Encode to jpg
         byte[] bytes = texture2D.EncodeToJPG(quality);
 
-        GetComponent<TransmissionManager>().SendStreamAsync(bytes, width, height);
+        int totalSize = bytes.Length;
+        int chunkSize = 2048;
+
+        int totalCount = (totalSize / chunkSize) + (totalSize % chunkSize == 0 ? 0 : 1);
+        int lastChunkSize = totalSize % chunkSize == 0 ? chunkSize : totalSize % chunkSize;
+
+        for (int i = 0; i < totalCount; i ++)
+        {
+            if (i == totalCount - 1)
+            {
+                byte[] chunkBytes = new byte[lastChunkSize];
+                Array.Copy(bytes, i * chunkSize, chunkBytes, 0, lastChunkSize);
+                GetComponent<TransmissionManager>().SendStream(chunkBytes, streamId, i, i * chunkSize, lastChunkSize, totalCount, totalSize, width, height);
+            }
+            else
+            {
+                byte[] chunkBytes = new byte[chunkSize];
+                Array.Copy(bytes, i * chunkSize, chunkBytes, 0, chunkSize);
+                GetComponent<TransmissionManager>().SendStream(chunkBytes, streamId, i, i * chunkSize, chunkSize, totalCount, totalSize, width, height);
+            }
+        }
+
+        tmp.text = "";
+        tmp.text += $"stream data size = {bytes.Length}, quality = {quality}, width = {width}, height = {height}\n";
+
+        TickStreamId();
 
         // Debug.Log($"SendTextureAsync OK. Data size = {bytes.Length}");
+    }
+
+    void TickStreamId()
+    {
+        if (streamId == maxStreamId) streamId = 0;
+        else streamId++;
     }
 }

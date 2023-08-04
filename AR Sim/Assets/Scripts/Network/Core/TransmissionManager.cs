@@ -1,5 +1,3 @@
-#define UNITY_DEBUG
-
 using UnityEngine;
 using UnityEngine.Events;
 using System;
@@ -11,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
+using TMPro;
 
 public enum NetworkAudience { SinglePeer, KnownPeers, NetworkBroadcast };
 
@@ -18,6 +17,12 @@ public enum PlatformEnum { Unknown, Touchscreen, MagicLeap };
 
 public struct StreamDataHeader
 {
+    public int id;
+    public int count;
+    public int offset;
+    public int size;
+    public int totalCount;
+    public int totalSize;
     public int width;
     public int height;
 }
@@ -43,13 +48,16 @@ public class TransmissionManager : MonoBehaviour
     }
 
     //Public Variables:
-    public int port = 23000;
+    private int port;
 
     // For Unity Editor debug use
     public int sendPort = 23001;
     public int receivePort = 23002;
 
     public int bufferSize = 2048;
+
+    public TextMeshProUGUI tmp;
+    List<string> list;
 
     // [Tooltip("On component addition a randomized ID will be generated.  All applications running on your network must have the same appKey and privateKey to recognize eachother - empty keys are accepted.")]
     [Tooltip("On component addition a randomized ID will be generated.  All applications running on your network must have a unique appKey as the ID - empty keys are accepted.")]
@@ -62,7 +70,7 @@ public class TransmissionManager : MonoBehaviour
 
     public Pose globalPose;
 
-    public bool debugOutgoing;
+    public bool debugOutgoing = true;
     public bool debugIncoming;
 
     public static DateTime startUpTime;
@@ -160,13 +168,26 @@ public class TransmissionManager : MonoBehaviour
         }
         _initialized = true;
 
+        // switch (platform)
+        // {
+        //     case PlatformEnum.MagicLeap:
+        //         port = 8848;
+        //         break;
+        //     case PlatformEnum.Touchscreen:
+        //         port = 8849;
+        //         break;
+        //     default:
+        //         break;
+        // }
+
+        port = 23000;
         //establish socket:
         bool socketOpen = false;
         while (!socketOpen)
         {
             try
             {
-#if UNITY_DEBUG
+#if UNITY_EDITOR
                 _udpClient = new UdpClient(instance.receivePort);
 #else
                 _udpClient = new UdpClient(instance.port);
@@ -180,6 +201,7 @@ public class TransmissionManager : MonoBehaviour
             {
             }
         }
+        list = new List<string>();
 
         //establish receive thread:
         _receiveThreadAlive = true;
@@ -222,8 +244,8 @@ public class TransmissionManager : MonoBehaviour
         // Generate transmission:
         string serialized = JsonUtility.ToJson(message);
         byte[] bytes = Encoding.UTF8.GetBytes(serialized);
-        
-#if UNITY_DEBUG
+
+#if UNITY_EDITOR
         IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, instance.sendPort);
         // _udpClient = new UdpClient(instance.receivePort);
 #else
@@ -231,11 +253,11 @@ public class TransmissionManager : MonoBehaviour
 #endif
 
         //size check:
-        if (bytes.Length > _udpClient.Client.SendBufferSize)
-        {
-            Debug.Log($"Message too large to send! Buffer is currently {instance.bufferSize} bytes and you are tring to send {bytes.Length} bytes. Try increasing the buffer size.");
-            return;
-        }
+        // if (bytes.Length > _udpClient.Client.SendBufferSize)
+        // {
+        //     Debug.Log($"Message too large to send! Buffer is currently {instance.bufferSize} bytes and you are tring to send {bytes.Length} bytes. Try increasing the buffer size.");
+        //     return;
+        // }
 
         // Send:
         if (string.IsNullOrEmpty(message.t))
@@ -256,13 +278,44 @@ public class TransmissionManager : MonoBehaviour
         else
         {
             endPoint.Address = IPAddress.Parse(message.t);
-            _udpClient.Send(bytes, bytes.Length, endPoint);
+
+            list.Add($"bytes length to be sent = {bytes.Length}\n");
+            if (list.Count >= 10)
+            {
+                list.RemoveAt(0);
+            }
+            tmp.text = "";
+            foreach (string str in list)
+            {
+                tmp.text += str;
+            }
+
+            try
+            {
+                _udpClient.Send(bytes, bytes.Length, endPoint);
+            }
+            catch (Exception e)
+            {
+                tmp.text += e;
+            }
+            
 
             //debug:
-            if (instance.debugOutgoing)
-            {
-                Debug.Log($"Sent {serialized} to {endPoint}");
-            }
+            // if (instance.debugOutgoing)
+            // {
+            //     // Debug.Log($"Sent {serialized} to {endPoint}");
+            //     list.Add($"{System.DateTime.Now}: Sent {message.ty.ToString()} from {NetworkUtilities.MyAddress} to {endPoint.Address} : {endPoint.Port}\n");
+            //     if (list.Count >= 10)
+            //     {
+            //         list.RemoveAt(0);
+            //     }
+            //     tmp.text = "";
+            //     foreach (string str in list)
+            //     {
+            //         tmp.text += str;
+            //     }
+            //     
+            // }
         }
     }
 
@@ -272,7 +325,7 @@ public class TransmissionManager : MonoBehaviour
         string serialized = JsonUtility.ToJson(message);
         byte[] bytes = Encoding.UTF8.GetBytes(serialized);
 
-#if UNITY_DEBUG
+#if UNITY_EDITOR
         IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, instance.sendPort);
         // _udpClient = new UdpClient(instance.receivePort);
 #else
@@ -302,7 +355,7 @@ public class TransmissionManager : MonoBehaviour
             //debug:
             if (instance.debugOutgoing)
             {
-                Debug.Log($"Sent {serialized} to {endPoint}");
+                // Debug.Log($"Sent {serialized} to {endPoint}");
             }
         }
 
@@ -391,13 +444,28 @@ public class TransmissionManager : MonoBehaviour
         Send(new YieldControlMessage(a_platform));
     }
 
-    public void SendStreamAsync(byte[] a_data, int a_width, int a_height)
+    // public void SendStreamAsync(byte[] a_data, int a_width, int a_height)
+    // {
+    //     StreamDataHeader streamDataHeader;
+    //     streamDataHeader.width = a_width;
+    //     streamDataHeader.height = a_height;
+    // 
+    //     SendAsync(new StreamMessage(streamDataHeader, a_data));
+    // }
+
+    public void SendStream(byte[] a_data, int a_id, int a_count, int a_offset, int a_size, int a_totalCount, int a_totalSize, int a_width, int a_height)
     {
         StreamDataHeader streamDataHeader;
+        streamDataHeader.id = a_id;
+        streamDataHeader.count = a_count;
+        streamDataHeader.offset = a_offset;
+        streamDataHeader.size = a_size;
+        streamDataHeader.totalCount = a_totalCount;
+        streamDataHeader.totalSize = a_totalSize;
         streamDataHeader.width = a_width;
         streamDataHeader.height = a_height;
 
-        SendAsync(new StreamMessage(streamDataHeader, a_data));
+        Send(new StreamMessage(streamDataHeader, a_data));
     }
 
 

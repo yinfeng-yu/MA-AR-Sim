@@ -90,8 +90,9 @@ public class RoboyMovement : MonoBehaviour
             // parent.rotation = YRotation(parent.rotation, Quaternion.Inverse(Camera.main.transform.rotation));
             // cameraPivot.rotation = YRotation(parent.rotation, Quaternion.Inverse(Camera.main.transform.rotation));
         }
-        // transform.rotation = YRotation(transform.rotation, camera.rotation);
+        var roboyTargetPos = Camera.main.transform.position + transform.position - cameraPivot.position;
         // transform.rotation = YRotation(transform.rotation, Camera.main.transform.rotation);
+        transform.position = new Vector3(roboyTargetPos.x, transform.position.y, roboyTargetPos.z);
         // cameraPivot.forward = new Vector3(Camera.main.transform.forward.x, 0f, Camera.main.transform.forward.z);
         // cameraPivot.position = new Vector3(Camera.main.transform.position.x, 0f, Camera.main.transform.position.z);
         // cameraPivot.localPosition = new Vector3(cameraPivot.localPosition.x, 0f, cameraPivot.localPosition.z);

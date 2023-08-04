@@ -206,7 +206,7 @@ ModelImporter:
         max: {x: 0, y: 0, z: 0}
         value: {x: 0, y: 0, z: 0}
         length: 0
-        modified: 0
+        modified: 1
     - boneName: DEF-spine.002
       humanName: Chest
       limit:
@@ -214,7 +214,7 @@ ModelImporter:
         max: {x: 0, y: 0, z: 0}
         value: {x: 0, y: 0, z: 0}
         length: 0
-        modified: 0
+        modified: 1
     - boneName: DEF-spine.004
       humanName: Neck
       limit:
@@ -222,15 +222,15 @@ ModelImporter:
         max: {x: 0, y: 0, z: 0}
         value: {x: 0, y: 0, z: 0}
         length: 0
-        modified: 0
+        modified: 1
     - boneName: DEF-spine.006
       humanName: Head
       limit:
-        min: {x: 0, y: 0, z: 0}
-        max: {x: 0, y: 0, z: 0}
+        min: {x: -45, y: -45, z: -45}
+        max: {x: 45, y: 45, z: 45}
         value: {x: 0, y: 0, z: 0}
         length: 0
-        modified: 0
+        modified: 1
     - boneName: DEF-shoulder.L
       humanName: LeftShoulder
       limit:
@@ -542,7 +542,7 @@ ModelImporter:
         max: {x: 0, y: 0, z: 0}
         value: {x: 0, y: 0, z: 0}
         length: 0
-        modified: 0
+        modified: 1
     - boneName: DEF-thigh.L
       humanName: LeftUpperLeg
       limit:

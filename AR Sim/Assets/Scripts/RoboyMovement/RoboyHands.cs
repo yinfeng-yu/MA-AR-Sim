@@ -65,26 +65,26 @@ public class RoboyHands : MonoBehaviour
         set => handOffset = value;
     }
 
-    public GameObject LeftGrab
-    {
-        get => leftGrab;
-        set
-        {
-            leftGrab = value;
-            if(value != null) leftRotation = leftGrab.transform.rotation;
-        }
-    }
-
-    public GameObject RightGrab
-    {
-        get => rightGrab;
-        set
-        {
-            rightGrab = value;
-            if(value != null) rightRotation = rightGrab.transform.rotation;
-
-        }
-    }
+    // public GameObject LeftGrab
+    // {
+    //     get => leftGrab;
+    //     set
+    //     {
+    //         leftGrab = value;
+    //         if(value != null) leftRotation = leftGrab.transform.rotation;
+    //     }
+    // }
+    // 
+    // public GameObject RightGrab
+    // {
+    //     get => rightGrab;
+    //     set
+    //     {
+    //         rightGrab = value;
+    //         if(value != null) rightRotation = rightGrab.transform.rotation;
+    // 
+    //     }
+    // }
 
     protected virtual void Start()
     {
@@ -126,14 +126,26 @@ public class RoboyHands : MonoBehaviour
 
         HandsFollowing();
 
-        if (Input.GetMouseButton(0))
-        {
-            GetComponentInChildren<Animator>().SetBool("grab_left", true);
-        }
-        else
-        {
-            GetComponentInChildren<Animator>().SetBool("grab_left", false);
-        }
+    }
+
+    public void LeftGrab()
+    {
+        GetComponentInChildren<Animator>().SetBool("grab_left", true);
+    }
+
+    public void LeftRelease()
+    {
+        GetComponentInChildren<Animator>().SetBool("grab_left", false);
+    }
+
+    public void RightGrab()
+    {
+
+    }
+
+    public void RightRelease()
+    {
+
     }
 
     /// <summary>
@@ -145,7 +157,7 @@ public class RoboyHands : MonoBehaviour
         foreach (IMixedRealityController controller in CoreServices.InputSystem.DetectedControllers)
         {
             // Debug.Log(controller.InputSource.SourceType);
-
+            
             // If detected controller is supported
             if (supportedInputSourceTypes.Contains(controller.InputSource.SourceType))
             {
@@ -163,6 +175,13 @@ public class RoboyHands : MonoBehaviour
                             leftHandIKTarget.position = interactionMapping.PositionData;
                             leftHandIKTarget.rotation = interactionMapping.RotationData * Quaternion.Euler(Vector3.forward * leftHandRotationZOffset);
                         }
+                    }
+
+                    if (interactionMapping.InputType == DeviceInputType.Trigger)
+                    {
+                        // Debug.Log(interactionMapping.AxisCodeX);
+                        // Debug.Log(interactionMapping.AxisCodeY);
+                        // Debug.Log(interactionMapping.Changed);
                     }
 
                     if (interactionMapping.InputType == DeviceInputType.SpatialGrip)
@@ -243,13 +262,13 @@ public class RoboyHands : MonoBehaviour
             {
                 if (leftGrab != null)
                 {
-                    leftGrab.GetComponentInChildren<RoboyGrabbable>().LetGo(handsClosed);
+                    // leftGrab.GetComponentInChildren<RoboyGrabbable>().LetGo(handsClosed);
                     leftGrab = null;
                 }
 
                 if (rightGrab != null)
                 {
-                    rightGrab.GetComponentInChildren<RoboyGrabbable>().LetGo(handsClosed);
+                    // rightGrab.GetComponentInChildren<RoboyGrabbable>().LetGo(handsClosed);
                     rightGrab = null;
                 }
                 
