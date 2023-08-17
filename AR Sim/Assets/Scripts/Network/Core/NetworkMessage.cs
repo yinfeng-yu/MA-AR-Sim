@@ -36,15 +36,14 @@ public enum NetworkMessageType
     TransformSyncMessage,
     BoolArrayMessage,
     BoolMessage,
-    ByteArrayMessage,
+    
     ColorArrayMessage,
     ColorMessage,
     FloatArrayMessage,
-    FloatMessage,
+    
     PoseArrayMessage,
     PoseMessage,
     QuaternionArrayMessage,
-    QuaternionMessage,
     RPCMessage,
     StringArrayMessage,
     StringMessage,
@@ -60,7 +59,14 @@ public enum NetworkMessageType
     StreamMessage,
     MoveRequestMessage,
     YieldControlMessage,
+
+    ByteArrayMessage,
+    QuaternionMessage,
+    FloatMessage,
+
+    CommandMessage,
 }
+
 
 public class NetworkMessage
 {
@@ -209,5 +215,58 @@ public class YieldControlMessage : NetworkMessage
     public YieldControlMessage(PlatformEnum targetPlatform, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.YieldControlMessage, audience, targetAddress, true, data)
     {
         tp = targetPlatform;
+    }
+}
+
+
+public class QuaternionMessage : NetworkMessage
+{
+    /// <summary>
+    /// Label (name) of the quaternion
+    /// </summary>
+    public string l;
+
+    /// <summary>
+    /// The quaternion to be transmitted
+    /// </summary>
+    public Quaternion q;
+
+    public QuaternionMessage(string a_label, Quaternion a_quaternion, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.QuaternionMessage, audience, targetAddress, true, data)
+    {
+        l = a_label;
+        q = a_quaternion;
+    }
+}
+
+public class FloatMessage : NetworkMessage
+{
+    /// <summary>
+    /// Label (name) of the float
+    /// </summary>
+    public string l;
+
+    /// <summary>
+    /// The float to be transmitted
+    /// </summary>
+    public float fl;
+
+    public FloatMessage(string a_label, float a_float, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.FloatMessage, audience, targetAddress, true, data)
+    {
+        l = a_label;
+        fl = a_float;
+    }
+    
+}
+
+public class CommandMessage : NetworkMessage
+{
+    /// <summary>
+    /// The type of the command
+    /// </summary>
+    public Command co;
+
+    public CommandMessage(Command a_command, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.CommandMessage, audience, targetAddress, true, data)
+    {
+        co = a_command;
     }
 }

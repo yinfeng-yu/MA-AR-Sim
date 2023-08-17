@@ -103,7 +103,10 @@ public class TransmissionManager : MonoBehaviour
     private static bool _initialized;
 
     private static Dictionary<string, string> _globalStrings = new Dictionary<string, string>();
-    private static Dictionary<string, float> _globalFloats = new Dictionary<string, float>();
+
+    public Dictionary<string, float> globalFloats = new Dictionary<string, float>();
+    public Dictionary<string, Quaternion> globalQuaternions = new Dictionary<string, Quaternion>();
+
     private static Dictionary<string, bool> _globalBools = new Dictionary<string, bool>();
     private static Dictionary<string, Vector2> _globalVector2 = new Dictionary<string, Vector2>();
     private static Dictionary<string, Vector3> _globalVector3 = new Dictionary<string, Vector3>();

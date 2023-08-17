@@ -21,8 +21,10 @@ public class CameraStreamer : MonoBehaviour
 
     [SerializeField] private Camera fpCam;
     [SerializeField] private Camera tpCam;
+    [SerializeField] private Camera bvCam;
     private RenderTexture fpTex;
     private RenderTexture tpTex;
+    private RenderTexture bvTex;
 
     // private RenderTexture renderTexture = null;
     private Texture2D texture2D = null;
@@ -37,6 +39,7 @@ public class CameraStreamer : MonoBehaviour
     {
         FirstPerson,
         ThirdPerson,
+        BirdsView,
     }
 
     public CameraView cameraView = CameraView.FirstPerson;
@@ -49,12 +52,15 @@ public class CameraStreamer : MonoBehaviour
         // fpTex = new RenderTexture(Screen.width, Screen.height, 24);
         tpTex = new RenderTexture(640, 480, 24);
         // tpTex = new RenderTexture(Screen.width, Screen.height, 24);
+        bvTex = new RenderTexture(640, 480, 24);
 
         fpTex.enableRandomWrite = true;
         tpTex.enableRandomWrite = true;
+        bvTex.enableRandomWrite = true;
 
         fpCam.targetTexture = fpTex;
         tpCam.targetTexture = tpTex;
+        bvCam.targetTexture = bvTex;
         texture2D = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
 
         interval = 1f / frequency;
@@ -108,6 +114,11 @@ public class CameraStreamer : MonoBehaviour
                 width = tpTex.width;
                 height = tpTex.height;
                 break;
+            case CameraView.BirdsView:
+                RenderTexture.active = bvTex;
+                width = bvTex.width;
+                height = bvTex.height;
+                break;
             default:
                 break;
         }
@@ -130,13 +141,13 @@ public class CameraStreamer : MonoBehaviour
             {
                 byte[] chunkBytes = new byte[lastChunkSize];
                 Array.Copy(bytes, i * chunkSize, chunkBytes, 0, lastChunkSize);
-                GetComponent<TransmissionManager>().SendStream(chunkBytes, streamId, i, i * chunkSize, lastChunkSize, totalCount, totalSize, width, height);
+                TransmissionManager.instance.SendStream(chunkBytes, streamId, i, i * chunkSize, lastChunkSize, totalCount, totalSize, width, height);
             }
             else
             {
                 byte[] chunkBytes = new byte[chunkSize];
                 Array.Copy(bytes, i * chunkSize, chunkBytes, 0, chunkSize);
-                GetComponent<TransmissionManager>().SendStream(chunkBytes, streamId, i, i * chunkSize, chunkSize, totalCount, totalSize, width, height);
+                TransmissionManager.instance.SendStream(chunkBytes, streamId, i, i * chunkSize, chunkSize, totalCount, totalSize, width, height);
             }
         }
 

@@ -8,7 +8,8 @@ using Microsoft.MixedReality.Toolkit.Input;
 
 public class RoboyHands : MonoBehaviour
 {
-
+    public bool isLeftHandGrabbing = false;
+    
     public bool handsClosed = false;
     public event EventHandler<bool> OnHandsClosing;
     public bool HandsClosed
@@ -124,18 +125,22 @@ public class RoboyHands : MonoBehaviour
         // MoveAvatarHand(avatarRightHand, rightHandTargetPosition, rightHandTargetRotation,
         //     initialAvatarRightHandRotation);
 
-        HandsFollowing();
+
+
+        // HandsFollowing();
 
     }
 
     public void LeftGrab()
     {
         GetComponentInChildren<Animator>().SetBool("grab_left", true);
+        isLeftHandGrabbing = true;
     }
 
     public void LeftRelease()
     {
         GetComponentInChildren<Animator>().SetBool("grab_left", false);
+        isLeftHandGrabbing = false;
     }
 
     public void RightGrab()

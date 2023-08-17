@@ -22,6 +22,11 @@ public class GridBuildingSystemEditor : Editor
             myTarget.ClearGrid();
         }
 
+        if (GUILayout.Button("Save Room"))
+        {
+            myTarget.SaveRoom();
+        }
+
     }
 
 }

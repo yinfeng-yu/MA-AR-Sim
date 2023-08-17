@@ -69,21 +69,81 @@ public class NetworkMessageHandler : MonoBehaviour
                 peers[currentMessage.a].age = Time.realtimeSinceStartup;
                 break;
 
-            // case NetworkMessageType.MoveRequestMessage:
-            //     MoveRequestMessage moveRequestMessage = UnpackMessage<MoveRequestMessage>(rawMessage);
-            //     moveRequestReceived?.Invoke(moveRequestMessage.se);
-            //     break;
-            // 
-            // case NetworkMessageType.YieldControlMessage:
-            //     YieldControlMessage yieldControlMessage = UnpackMessage<YieldControlMessage>(rawMessage);
-            //     if (platform == yieldControlMessage.tp)
-            //     {
-            //         if (platform == PlatformEnum.MagicLeap)
-            //         {
-            //             CameraSwitch.SwitchCamera();
-            //         }
-            //     }
-            //     break;
+            case NetworkMessageType.QuaternionMessage:
+                // Debug.Log("Quaternion Message Received");
+                QuaternionMessage receivedQuaternionMessage = NetworkUtilities.UnpackMessage<QuaternionMessage>(rawMessage);
+                TransmissionManager.instance.globalQuaternions[receivedQuaternionMessage.l] = receivedQuaternionMessage.q;
+                break;
+
+            case NetworkMessageType.FloatMessage:
+                // Debug.Log("Float Message Received");
+                FloatMessage receivedFloatMessage = NetworkUtilities.UnpackMessage<FloatMessage>(rawMessage);
+                TransmissionManager.instance.globalFloats[receivedFloatMessage.l] = receivedFloatMessage.fl;
+                break;
+
+            case NetworkMessageType.CommandMessage:
+                CommandMessage receivedCommandMessage = NetworkUtilities.UnpackMessage<CommandMessage>(rawMessage);
+                // Debug.Log(receivedCommandMessage == null);
+                // Debug.Log(receivedCommandMessage.ToString());
+                // Debug.Log(receivedCommandMessage.f == null);
+                // Debug.Log(receivedCommandMessage.co == null);
+                // Debug.Log(receivedCommandMessage.co.ToString());
+                HandleCommand(receivedCommandMessage.co);
+                break;
+
+
+                // case NetworkMessageType.MoveRequestMessage:
+                //     MoveRequestMessage moveRequestMessage = UnpackMessage<MoveRequestMessage>(rawMessage);
+                //     moveRequestReceived?.Invoke(moveRequestMessage.se);
+                //     break;
+                // 
+                // case NetworkMessageType.YieldControlMessage:
+                //     YieldControlMessage yieldControlMessage = UnpackMessage<YieldControlMessage>(rawMessage);
+                //     if (platform == yieldControlMessage.tp)
+                //     {
+                //         if (platform == PlatformEnum.MagicLeap)
+                //         {
+                //             CameraSwitch.SwitchCamera();
+                //         }
+                //     }
+                //     break;
+        }
+    }
+
+    void HandleCommand(Command command)
+    {
+        switch (command.type)
+        {
+            case CommandType.Grab:
+                Debug.Log("Grab Command Received.");
+                if (RoboyComponentsAccess.instance.roboyHands.isLeftHandGrabbing)
+                {
+                    RoboyComponentsAccess.instance.roboyHands.LeftRelease();
+                }
+                else
+                {
+                    RoboyComponentsAccess.instance.roboyHands.LeftGrab();
+                }
+                break;
+
+            case CommandType.Displace:
+                Debug.Log($"Target Location: {command.targetLocation}");
+                NavigationManager.instance.SetDestination(command.targetLocation);
+                break;
+
+            case CommandType.Patrol:
+                if (command.waypoints.Length == 0)
+                {
+                    NavigationManager.instance.StopPatrol();
+                }
+                else
+                {
+                    NavigationManager.instance.StartPatrol(command.waypoints);
+                }
+                break;
+
+            default:
+                break;
         }
     }
 }
