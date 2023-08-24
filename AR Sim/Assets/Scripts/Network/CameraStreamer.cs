@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CameraStreamer : MonoBehaviour
 {
@@ -22,6 +23,8 @@ public class CameraStreamer : MonoBehaviour
     [SerializeField] private Camera fpCam;
     [SerializeField] private Camera tpCam;
     [SerializeField] private Camera bvCam;
+    [SerializeField] private RawImage sceneRawImage;
+
     private RenderTexture fpTex;
     private RenderTexture tpTex;
     private RenderTexture bvTex;
@@ -61,6 +64,9 @@ public class CameraStreamer : MonoBehaviour
         fpCam.targetTexture = fpTex;
         tpCam.targetTexture = tpTex;
         bvCam.targetTexture = bvTex;
+
+        sceneRawImage.texture = fpTex;
+
         texture2D = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
 
         interval = 1f / frequency;

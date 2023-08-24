@@ -43,7 +43,7 @@ MonoBehaviour:
   lookHorizontal: AXIS_4
   lookVertical: AXIS_5
   defaultEyeGazeSimulationMode: 1
-  defaultControllerSimulationMode: 3
+  defaultControllerSimulationMode: 2
   toggleLeftControllerKey:
     bindingType: 2
     code: 116

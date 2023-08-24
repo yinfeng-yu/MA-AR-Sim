@@ -5,10 +5,13 @@ using UnityEngine;
 
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
+using Microsoft.MixedReality.Toolkit.Utilities;
 
 public class RoboyHands : MonoBehaviour
 {
     public bool isLeftHandGrabbing = false;
+
+    
     
     public bool handsClosed = false;
     public event EventHandler<bool> OnHandsClosing;
@@ -59,6 +62,12 @@ public class RoboyHands : MonoBehaviour
     protected GameObject rightGrab;
     protected Quaternion rightRotation;
 
+    private bool _leftHandUpdate = false;
+    public bool leftHandUpdate
+    {
+        get => _leftHandUpdate;
+        set => _leftHandUpdate = value;        
+    }
 
     public Vector3 HandOffset
     {
@@ -125,10 +134,6 @@ public class RoboyHands : MonoBehaviour
         // MoveAvatarHand(avatarRightHand, rightHandTargetPosition, rightHandTargetRotation,
         //     initialAvatarRightHandRotation);
 
-
-
-        // HandsFollowing();
-
     }
 
     public void LeftGrab()
@@ -153,51 +158,6 @@ public class RoboyHands : MonoBehaviour
 
     }
 
-    /// <summary>
-    /// Roboy's IK targets follow the supported input sources.
-    /// </summary>
-    void HandsFollowing()
-    {
-        // Controller
-        foreach (IMixedRealityController controller in CoreServices.InputSystem.DetectedControllers)
-        {
-            // Debug.Log(controller.InputSource.SourceType);
-            
-            // If detected controller is supported
-            if (supportedInputSourceTypes.Contains(controller.InputSource.SourceType))
-            {
-                // Interactions for a controller is the list of inputs that this controller exposes
-                foreach (MixedRealityInteractionMapping interactionMapping in controller.Interactions)
-                {
-                    // 6DOF controllers support the "SpatialPointer" type (pointing direction)
-                    // or "GripPointer" type (direction of the 6DOF controller)
-                    if (interactionMapping.InputType == DeviceInputType.SpatialPointer)
-                    {
-                        // Debug.Log("Spatial pointer PositionData: " + interactionMapping.PositionData);
-                        // Debug.Log("Spatial pointer RotationData: " + interactionMapping.RotationData);
-                        if (controller.ControllerHandedness == Microsoft.MixedReality.Toolkit.Utilities.Handedness.Left)
-                        {
-                            leftHandIKTarget.position = interactionMapping.PositionData;
-                            leftHandIKTarget.rotation = interactionMapping.RotationData * Quaternion.Euler(Vector3.forward * leftHandRotationZOffset);
-                        }
-                    }
-
-                    if (interactionMapping.InputType == DeviceInputType.Trigger)
-                    {
-                        // Debug.Log(interactionMapping.AxisCodeX);
-                        // Debug.Log(interactionMapping.AxisCodeY);
-                        // Debug.Log(interactionMapping.Changed);
-                    }
-
-                    if (interactionMapping.InputType == DeviceInputType.SpatialGrip)
-                    {
-                        // Debug.Log("Spatial grip PositionData: " + interactionMapping.PositionData);
-                        // Debug.Log("Spatial grip RotationData: " + interactionMapping.RotationData);
-                    }
-                }
-            }
-        }
-    }
 
     /// <summary>
     /// Encodes the hand position for networking
@@ -282,4 +242,5 @@ public class RoboyHands : MonoBehaviour
         }
         
     }
+
 }

@@ -65,6 +65,7 @@ public enum NetworkMessageType
     FloatMessage,
 
     CommandMessage,
+    BaseControlMessage,
 }
 
 
@@ -268,5 +269,14 @@ public class CommandMessage : NetworkMessage
     public CommandMessage(Command a_command, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.CommandMessage, audience, targetAddress, true, data)
     {
         co = a_command;
+    }
+}
+
+public class BaseControlMessage : NetworkMessage
+{
+    public BaseControlInfo bc;
+    public BaseControlMessage(BaseControlInfo a_baseControl, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.BaseControlMessage, audience, targetAddress, true, data)
+    {
+        bc = a_baseControl;
     }
 }

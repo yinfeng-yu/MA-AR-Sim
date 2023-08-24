@@ -91,23 +91,16 @@ public class NetworkMessageHandler : MonoBehaviour
                 HandleCommand(receivedCommandMessage.co);
                 break;
 
-
-                // case NetworkMessageType.MoveRequestMessage:
-                //     MoveRequestMessage moveRequestMessage = UnpackMessage<MoveRequestMessage>(rawMessage);
-                //     moveRequestReceived?.Invoke(moveRequestMessage.se);
-                //     break;
-                // 
-                // case NetworkMessageType.YieldControlMessage:
-                //     YieldControlMessage yieldControlMessage = UnpackMessage<YieldControlMessage>(rawMessage);
-                //     if (platform == yieldControlMessage.tp)
-                //     {
-                //         if (platform == PlatformEnum.MagicLeap)
-                //         {
-                //             CameraSwitch.SwitchCamera();
-                //         }
-                //     }
-                //     break;
+            case NetworkMessageType.BaseControlMessage:
+                BaseControlMessage receivedBaseControlMessage = NetworkUtilities.UnpackMessage<BaseControlMessage>(rawMessage);
+                HandleBaseControl(receivedBaseControlMessage.bc);
+                break;
         }
+    }
+
+    void HandleBaseControl(BaseControlInfo baseControlInfo)
+    {
+        if (baseControlInfo.confirm) RemoteInput.instance.confirm = true;
     }
 
     void HandleCommand(Command command)

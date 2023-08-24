@@ -19,7 +19,7 @@ public class NavigationManager : MonoBehaviour
     /// <summary>
     /// The NavMeshAgent component attached to the main camera.
     /// </summary>
-    private NavMeshAgent _navMeshAgent;
+    [SerializeField] private NavMeshAgent _navMeshAgent;
 
     [SerializeField] private bool m_reachedTarget = true;
     [SerializeField] private Transform m_target;
@@ -34,7 +34,6 @@ public class NavigationManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _navMeshAgent = Camera.main.gameObject.GetComponent<NavMeshAgent>();
         _navMeshAgent.enabled = false;
     }
 
