@@ -10,8 +10,9 @@ using Microsoft.MixedReality.Toolkit.Utilities;
 public class RoboyHands : MonoBehaviour
 {
     public bool isLeftHandGrabbing = false;
+    public bool isRightHandGrabbing = false;
 
-    
+    public Handedness handedness = Handedness.Left;
     
     public bool handsClosed = false;
     public event EventHandler<bool> OnHandsClosing;
@@ -150,12 +151,14 @@ public class RoboyHands : MonoBehaviour
 
     public void RightGrab()
     {
-
+        GetComponentInChildren<Animator>().SetBool("grab_right", true);
+        isRightHandGrabbing = true;
     }
 
     public void RightRelease()
     {
-
+        GetComponentInChildren<Animator>().SetBool("grab_right", false);
+        isRightHandGrabbing = false;
     }
 
 

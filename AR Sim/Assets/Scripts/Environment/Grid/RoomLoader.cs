@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 public class RoomLoader : MonoBehaviour
@@ -8,9 +10,9 @@ public class RoomLoader : MonoBehaviour
     [SerializeField] GameObject _floorPrefab;
 
     [SerializeField] Transform _wallParent;
-    [SerializeField] List<GameObject> _wallPrefabs;
+    [SerializeField] GameObject wallPrefab;
 
-    [SerializeField] RoomSaveFile _saveFile;
+    public string saveFileName = "Room";
 
     public void ClearRoom()
     {
@@ -27,27 +29,49 @@ public class RoomLoader : MonoBehaviour
 
     public void LoadRoom()
     {
-        int width = _saveFile.width;
-        int height = _saveFile.height;
-        float gridSize = _saveFile.gridSize;
+        string localPath = "/Data";
+        string fullPath = Application.dataPath + localPath;
 
+        string fullFilepath = fullPath + $"/{saveFileName}";
 
-        // Load Floors
-        for (int i = 0; i < width; i++)
+        if (File.Exists(fullFilepath))
         {
-            for (int j = 0; j < height; j++)
+            BinaryFormatter formatter = new BinaryFormatter();
+            FileStream stream = new FileStream(fullFilepath, FileMode.Open);
+
+            string serialized = formatter.Deserialize(stream) as string;
+            RoomSaveFile data = JsonUtility.FromJson<RoomSaveFile>(serialized);
+            stream.Close();
+
+
+            int width = data.width;
+            int height = data.height;
+            float gridSize = data.gridSize;
+
+            // Load Floors
+            for (int i = 0; i < width; i++)
             {
-                var go = Instantiate(_floorPrefab, _floorParent);
-                go.transform.position = new Vector3(i * gridSize, 0, j * gridSize) + (Vector3.right * gridSize * 0.5f) + (Vector3.forward * gridSize * 0.5f);
+                for (int j = 0; j < height; j++)
+                {
+                    var go = Instantiate(_floorPrefab, _floorParent);
+                    go.transform.localPosition = new Vector3(i * gridSize, 0, j * gridSize) + (Vector3.right * gridSize * 0.5f) + (Vector3.forward * gridSize * 0.5f);
+                }
+            }
+
+            // Load Walls
+            foreach (var wd in data.walls)
+            {
+                var go = Instantiate(wallPrefab, _wallParent);
+                go.GetComponent<Wall>().wallType = (WallType) wd.type;
+                go.GetComponent<Wall>().UpdateWall();
+
+                go.transform.localPosition = wd.position;
+                go.transform.forward = wd.forward;
             }
         }
-
-        // Load Walls
-        foreach (var wd in _saveFile.walls)
+        else
         {
-            var go = Instantiate(_wallPrefabs[wd.type], _wallParent);
-            go.transform.position = wd.position;
-            go.transform.forward = wd.forward;
+            Debug.LogError("Save file not found in" + fullPath);
         }
     }
 }

@@ -146,6 +146,7 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 11400000, guid: 7035bf7f1b6b04547a47ee775fadb158, type: 2}
   - {fileID: 391043861029315379, guid: fd5d9ab8cf5566e44a6a78e4d8e5f26f, type: 2}
+  - {fileID: 0}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -165,7 +166,7 @@ PlayerSettings:
   applicationIdentifier:
     Android: com.YinfengYu.ARSimEnviroment
     Lumin: com.YinfengYu.ARSimEnvironment
-    Standalone: com.YinfengYu.ARSim
+    Standalone: com.YinfengYu.ARSimEnvironment
     iPhone: com.YinfengYu.ARSimEnvironment
   buildNumber:
     Standalone: 0

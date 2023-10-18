@@ -7,48 +7,44 @@ using UnityEngine;
 public enum ControlMode
 {
     MainMenu,
-    MLController,
     Smartphone,
+    SmartphonePointer,
+    SmartphonePoseCalibration,
     HandTracking,
+    Steer,
 }
 
-public class ControlModeManager : MonoBehaviour
+public class ControlModeManager : Singleton<ControlModeManager>
 {
-    #region Singleton
-    public static ControlModeManager instance;
-    private void Awake()
-    {
-        if (instance != this)
-        {
-            instance = this;
-        }
-    }
-    #endregion
 
-    public SmartPhoneController smartPhoneController;
+    // public SmartPhoneController smartPhoneController;
     public CameraManager cameraManager;
 
-    BaseControlMode currentControlMode;
-
-    public ControlMode currentControlModeEnum;
+    BaseControlMode _currentControlMode;
+    public ControlMode currentControlMode = ControlMode.MainMenu;
 
     MainMenuControlMode mainMenuControlMode = new MainMenuControlMode();
-    SmartphoneControlMode smartPhoneControlMode = new SmartphoneControlMode();
+    SmartphoneControlMode smartphoneControlMode = new SmartphoneControlMode();
+    SmartphonePoseCalibrationControlMode smartphonePoseCalibrationMode = new SmartphonePoseCalibrationControlMode();
+    SmartphonePointerControlMode smartphonePointerControlMode = new SmartphonePointerControlMode();
     HandTrackingControlMode handTrackingControlMode = new HandTrackingControlMode();
+    SteerControlMode steerControlMode = new SteerControlMode();
 
+    public Quaternion initOrientation;
+    public Vector3 initPosition;
+    public Transform calibTarget;
 
     private void Start()
     {
-        currentControlMode = mainMenuControlMode;
-        currentControlModeEnum = ControlMode.MainMenu;
-        cameraManager.ActivateCamera(currentControlModeEnum);
+        _currentControlMode = mainMenuControlMode;
+        cameraManager.ActivateCamera(CameraType.MainMenu);
 
-        currentControlMode.EnterControlMode(this);
+        _currentControlMode.EnterControlMode(this);
     }
 
     private void Update()
     {
-        currentControlMode.UpdateControlMode(this);
+        _currentControlMode.UpdateControlMode(this);
 
     }
 
@@ -62,32 +58,49 @@ public class ControlModeManager : MonoBehaviour
     //     a_controlMode.EnterControlMode(this);
     // }
 
-    public void SwitchState(ControlMode a_controlModeEnum)
+    public void SwitchState(ControlMode controlMode)
     {
-        currentControlMode.ExitControlMode(this);
+        _currentControlMode.ExitControlMode(this);
         
-        switch (a_controlModeEnum)
+        switch (controlMode)
         {
             case ControlMode.MainMenu:
-                currentControlMode = mainMenuControlMode;
+                _currentControlMode = mainMenuControlMode;
+                cameraManager.ActivateCamera(CameraType.MainMenu);
                 break;
             case ControlMode.Smartphone:
-                currentControlMode = smartPhoneControlMode;
+                _currentControlMode = smartphoneControlMode;
+                cameraManager.ActivateCamera(CameraType.FirstPerson);
+                break;
+            case ControlMode.SmartphonePoseCalibration:
+                _currentControlMode = smartphonePoseCalibrationMode;
+                cameraManager.ActivateCamera(CameraType.MainMenu);
+                break;
+            case ControlMode.SmartphonePointer:
+                _currentControlMode = smartphonePointerControlMode;
+                cameraManager.ActivateCamera(CameraType.FirstPerson);
                 break;
             case ControlMode.HandTracking:
-                currentControlMode = handTrackingControlMode;
+                _currentControlMode = handTrackingControlMode;
+                cameraManager.ActivateCamera(CameraType.FirstPerson);
+                break;
+            case ControlMode.Steer:
+                _currentControlMode = steerControlMode;
+                cameraManager.ActivateCamera(CameraType.FirstPerson);
                 break;
             default:
                 break;
         }
-        currentControlModeEnum = a_controlModeEnum;
+        OperationSender.Instance.SendSwitchControlMode(controlMode);
 
-        cameraManager.ActivateCamera(currentControlModeEnum);
-
-        currentControlMode.EnterControlMode(this);
+        currentControlMode = controlMode;
+        _currentControlMode.EnterControlMode(this);
     }
 
     public void SwitchToSmartphone() => SwitchState(ControlMode.Smartphone);
+    public void SwitchToSmartphonePoseCalibration() => SwitchState(ControlMode.SmartphonePoseCalibration);
+    public void SwitchToSmartphonePointer() => SwitchState(ControlMode.SmartphonePointer);
     public void SwitchToHandTracking() => SwitchState(ControlMode.HandTracking);
+    public void SwitchToSteer() => SwitchState(ControlMode.Steer);
     public void SwitchToMainMenu() => SwitchState(ControlMode.MainMenu);
 }

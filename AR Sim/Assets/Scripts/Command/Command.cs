@@ -1,3 +1,4 @@
+using Microsoft.MixedReality.Toolkit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,13 +9,10 @@ public enum CommandType
     Grab,
     Displace,
     Patrol,
+    SwitchHand,
 }
 
-public enum Handness
-{
-    Left,
-    Right,
-}
+
 
 // Unity serialization does not support derived classes.
 // As the result, the base class has to contain everything.
@@ -24,7 +22,8 @@ public class Command
     public CommandType type;
 
     // Grab command
-    public Handness handness;
+    public bool isGrab;
+    public Handedness handedness;
 
     // Displace command
     public Vector2 targetLocation;
@@ -37,29 +36,3 @@ public class Command
         type = a_commandType;
     }
 }
-
-// [Serializable]
-// public class GrabCommand : Command
-// {
-//     public Handness handness;
-// 
-//     public GrabCommand(Handness a_handness)
-//     {
-//         type = CommandType.Grab;
-//         handness = a_handness;
-//     }
-// 
-// }
-// 
-// [Serializable]
-// public class DisplaceCommand : Command
-// {
-//     public Vector2 targetLocation;
-// 
-//     public DisplaceCommand(Vector2 a_targetLocation)
-//     {
-//         type = CommandType.Displace;
-//         targetLocation = a_targetLocation;
-//     }
-// 
-// }

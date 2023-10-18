@@ -2,28 +2,41 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 public class GridBuildingSystem : MonoBehaviour
 {
+    [Header("Grid Basics")]
     [SerializeField] int _width;
     [SerializeField] int _height;
     [SerializeField] float _gridSize = 3.5f; // Default
 
+    [Header("Container References")]
     [SerializeField] Transform _floorParent;
-    [SerializeField] GameObject _floorPrefab;
-
     [SerializeField] Transform _wallParent;
-    [SerializeField] List<GameObject> _wallPrefabs;
-    int chosenWallTypeIndex = 0;
 
+    [Header("Prefabs")]
+    [SerializeField] GameObject _floorPrefab;
+    [SerializeField] GameObject wallPrefab;
+
+
+    [Header("Grid Visuals")]
     [SerializeField] Transform _gridVisuals;
     [SerializeField] GameObject _pivotPrefab;
     [SerializeField] GameObject _edgePrefab;
 
+    [Header("Save File")]
+    public string saveFileName = "Room";
+    public bool forceWrite;
+
     [SerializeField] RoomSaveFile _saveFile;
 
+    [Header("UI References")]
     [SerializeField] TextMeshProUGUI _text;
     [SerializeField] TextMeshProUGUI _chosenWalltext;
+
+    private WallType currentWallType = WallType.Plain;
 
     public static GridBuildingSystem instance;
 
@@ -115,11 +128,6 @@ public class GridBuildingSystem : MonoBehaviour
         GenerateGrid();
     }
 
-    public void SetChosenWall(int wallIndex)
-    {
-        chosenWallTypeIndex = wallIndex;
-        _chosenWalltext.text = _wallPrefabs[wallIndex].name;
-    }
 
     void Update()
     {
@@ -138,7 +146,10 @@ public class GridBuildingSystem : MonoBehaviour
                     
                 if (Input.GetMouseButtonDown(0))
                 {
-                    var go = Instantiate(_wallPrefabs[chosenWallTypeIndex], _wallParent);
+                    var go = Instantiate(wallPrefab, _wallParent);
+                    go.GetComponent<Wall>().wallType = currentWallType;
+                    go.GetComponent<Wall>().UpdateWall();
+
                     go.transform.position = hit.collider.transform.position;
                     go.transform.forward = hit.collider.transform.forward;
 
@@ -147,21 +158,67 @@ public class GridBuildingSystem : MonoBehaviour
         }
     }
 
+    public void ChangeWallType(int wallType)
+    {
+        currentWallType = (WallType) wallType;
+    }
+
+
     public void SaveRoom()
     {
-        _saveFile.width = _width;
-        _saveFile.height = _height;
-        _saveFile.gridSize = _gridSize;
+        BinaryFormatter formatter = new BinaryFormatter();
 
-        _saveFile.walls = new List<RoomSaveFile.WallData>();
+        string localPath = "/Data";
+        string fullPath = Application.dataPath + localPath;
+
+        var info = new DirectoryInfo(fullPath);
+        var fileInfo = info.GetFiles();
+
+        string finalSaveFileName = saveFileName;
+
+        if (!forceWrite)
+        {
+            List<string> fileNames = new List<string>();
+
+            foreach (var file in fileInfo)
+            {
+                fileNames.Add(file.Name);
+            }
+
+            int i = 1;
+            while (fileNames.Contains(finalSaveFileName))
+            {
+                finalSaveFileName = saveFileName + $" ({i})";
+                i++;
+            }
+        }
+
+        string fullFilePath = fullPath + $"/{finalSaveFileName}";
+
+        FileStream stream = new FileStream(fullFilePath, FileMode.Create);
+
+        RoomSaveFile saveFile = new RoomSaveFile();
+
+        saveFile.width = _width;
+        saveFile.height = _height;
+        saveFile.gridSize = _gridSize;
+        saveFile.walls = new List<RoomSaveFile.WallData>();
 
         foreach (Transform w in _wallParent)
         {
             RoomSaveFile.WallData wallData;
             wallData.position = w.position;
             wallData.forward = w.forward;
-            wallData.type = w.gameObject.GetComponent<Wall>().type;
-            _saveFile.walls.Add(wallData);
+            wallData.type = (int)w.gameObject.GetComponent<Wall>().wallType;
+            saveFile.walls.Add(wallData);
         }
+
+        string serialized = JsonUtility.ToJson(saveFile);
+        formatter.Serialize(stream, serialized);
+        stream.Close();
+
+
+        Debug.Log($"Saved to {"Assets" + localPath + $"/{finalSaveFileName}"}!");
     }
+
 }

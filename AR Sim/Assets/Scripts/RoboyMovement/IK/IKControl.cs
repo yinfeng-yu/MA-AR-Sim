@@ -19,6 +19,8 @@ public class IKControl : MonoBehaviour {
     [SerializeField] float lookAtWeight = 1f;
 
     [SerializeField] float lookAtDistance = 100f;
+
+    public float lerpSpeed = 0.1f;
     
 
     // private Vector3 rightHandPos;
@@ -52,7 +54,7 @@ public class IKControl : MonoBehaviour {
                 // Set the right hand target position and rotation, if one has been assigned
                 if (rightHandObj != null) {
                     animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1);
-                    animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 1);  
+                    animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 1);
                     animator.SetIKPosition(AvatarIKGoal.RightHand, rightHandObj.position);
                     animator.SetIKRotation(AvatarIKGoal.RightHand, rightHandObj.rotation);
                 }   

@@ -11,18 +11,22 @@ public class SmartphoneControlMode : BaseControlMode
 
     public override void EnterControlMode(ControlModeManager a_controlModeManager)
     {
-        SmartPhoneController.instance.TurnOnPointer();
-        SmartPhoneController.instance.TurnOnPointerLine();
+        SmartphoneController.Instance.ShowPointer();
+        // SmartPhoneController.instance.TurnOnPointerLine();
+        // HandControl.instance.SetHandsInControl(true);
+        HandIK.Instance.fingerTracking = false;
+        HandControl.Instance.InitHandPose();
     }
 
     public override void UpdateControlMode(ControlModeManager a_controlModeManager)
     {
-        HandControl.instance.SmartphoneMove();
+        HandControl.Instance.SmartphoneMove(RoboyComponentsAccess.instance.roboyHands.handedness, a_controlModeManager.initOrientation, a_controlModeManager.initPosition);
     }
 
     public override void ExitControlMode(ControlModeManager a_controlModeManager)
     {
-        SmartPhoneController.instance.TurnOffPointer();
-        SmartPhoneController.instance.TurnOffPointerLine();
+        SmartphoneController.Instance.ShowPointer();
+        // SmartPhoneController.instance.TurnOffPointerLine();
+        HandControl.Instance.SetHandsInControl(false);
     }
 }

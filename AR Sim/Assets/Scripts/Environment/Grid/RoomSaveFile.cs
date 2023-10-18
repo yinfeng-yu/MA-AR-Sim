@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-[CreateAssetMenu(menuName = "Room Builder/Room Save File")]
-public class RoomSaveFile : ScriptableObject
+[Serializable]
+public class RoomSaveFile
 {
     [Serializable]
     public struct WallData

@@ -27,7 +27,7 @@ public class GazeSelect : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0) && selectedObject != null)
         {
-            if (GetComponent<GazeButton>() != null)
+            if (selectedObject.GetComponent<GazeButton>() != null)
             {
                 // selectedObject.GetComponent<PressableButton>().PressDistance = selectedObject.GetComponent<PressableButton>().MaxPushDistance;
                 Debug.Log("Press");
@@ -35,10 +35,11 @@ public class GazeSelect : MonoBehaviour
             }
         }
 
-        if (RemoteInput.instance.confirm && selectedObject != null)
+        if (RemoteInput.GetConfirm() && selectedObject != null)
         {
             if (selectedObject.GetComponent<GazeButton>() != null)
             {
+                RemoteInput.ConsumeConfirm();
                 // selectedObject.GetComponent<PressableButton>().PressDistance = selectedObject.GetComponent<PressableButton>().MaxPushDistance;
                 Debug.Log("Remote Press");
                 selectedObject.GetComponent<GazeButton>().Press();
@@ -89,16 +90,46 @@ public class GazeSelect : MonoBehaviour
 
     void RegisterCurrentGazeTarget()
     {
-        if (CoreServices.InputSystem.GazeProvider.GazeTarget)
+        var gazeDirection = CoreServices.InputSystem.GazeProvider.GazeDirection;
+
+        string layer = "MainMenuUI";
+        int layerMask = 1 << LayerMask.NameToLayer(layer);
+
+        layer = "SceneUI";
+        layerMask += 1 << LayerMask.NameToLayer(layer);
+
+        // int layer = 5;
+        // int layerMask = 1 << layer;
+
+        // Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
+        Ray ray = new Ray(Camera.main.transform.position, gazeDirection);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, 100f, layerMask))
         {
-            // Debug.Log("User gaze is currently over game object: "
-            //     + CoreServices.InputSystem.GazeProvider.GazeTarget);
-            selectedObject = CoreServices.InputSystem.GazeProvider.GazeTarget;
-            gazePoint = CoreServices.InputSystem.GazeProvider.HitPosition;
+            selectedObject = hit.transform.gameObject;
+            gazePoint = hit.point;
         }
         else
         {
             selectedObject = null;
         }
+
+
+        // if (CoreServices.InputSystem.GazeProvider.GazeTarget)
+        // {
+        //     // Debug.Log("User gaze is currently over game object: "
+        //     //     + CoreServices.InputSystem.GazeProvider.GazeTarget);
+        // 
+        //     var gazedObject = CoreServices.InputSystem.GazeProvider.GazeTarget;
+        //     if (LayerMask.LayerToName(gazedObject.layer) == "Scene")
+        //     {
+        //         selectedObject = gazedObject;
+        //     }
+        //     gazePoint = CoreServices.InputSystem.GazeProvider.HitPosition;
+        // }
+        // else
+        // {
+        //     selectedObject = null;
+        // }
     }
 }

@@ -2,57 +2,53 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SmartPhoneController : MonoBehaviour
+public class SmartphoneController : Singleton<SmartphoneController>
 {
-    public static SmartPhoneController instance;
-    private void Awake()
-    {
-        if (instance != this)
-        {
-            instance = this;
-        }
-    }
 
-    public Transform smartphonePointer;
-    public Transform pointerLine;
+    public GameObject smartphonePointer;
+    public GameObject pointerLine;
     public Transform smartphonePivot;
+    public GameObject calibTarget;
 
     private void Start()
     {
-        TurnOffPointer();
-        TurnOffPointerLine();
+        HidePointer();
+        HidePointerLine();
+        HideCalibTarget();
     }
 
-    public void TurnOnPointer()
+    public void SetPointerPosCalibMode()
     {
-        smartphonePointer.gameObject.SetActive(true);
+        smartphonePointer.transform.position = calibTarget.transform.position + 0.5f * Vector3.left;
     }
 
-    public void TurnOffPointer()
+    public void ShowPointer()
     {
-        smartphonePointer.gameObject.SetActive(false);
+        smartphonePointer.SetActive(true);
     }
 
-    public void TurnOnPointerLine()
+    public void HidePointer()
     {
-        pointerLine.gameObject.SetActive(true);
+        smartphonePointer.SetActive(false);
     }
 
-    public void TurnOffPointerLine()
+    public void ShowPointerLine()
     {
-        pointerLine.gameObject.SetActive(false);
+        pointerLine.SetActive(true);
     }
 
-    // private void OnDrawGizmos()
-    // {
-    //     Gizmos.color = Color.blue;
-    //     Gizmos.DrawLine(_mobilePhonePointer.position, _mobilePhonePointer.position + _mobilePhonePointer.forward * 5f);
-    //     Gizmos.color = Color.red;
-    //     Gizmos.DrawLine(_mobilePhonePointer.position, _mobilePhonePointer.position + _mobilePhonePointer.right * 5f);
-    //     Gizmos.color = Color.green;
-    //     Gizmos.DrawLine(_mobilePhonePointer.position, _mobilePhonePointer.position + _mobilePhonePointer.up * 5f);
-    // 
-    //     Gizmos.color = Color.yellow;
-    //     Gizmos.DrawWireSphere(_mobilePhonePointer.position, _deviceRange);
-    // }
+    public void HidePointerLine()
+    {
+        pointerLine.SetActive(false);
+    }
+
+    public void ShowCalibTarget()
+    {
+        calibTarget.SetActive(true);
+    }
+
+    public void HideCalibTarget()
+    {
+        calibTarget.SetActive(false);
+    }
 }

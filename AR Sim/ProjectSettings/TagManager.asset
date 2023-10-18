@@ -12,10 +12,10 @@ TagManager:
   - Water
   - UI
   - StreamInvisible
-  - MainMenuCamInvisible
-  - FPCamInvisible
-  - 
-  - 
+  - MainMenuUI
+  - Scene
+  - SceneUI
+  - AllVisible
   - 
   - 
   - 

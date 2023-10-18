@@ -11,16 +11,18 @@ public class HandTrackingControlMode : BaseControlMode
 
     public override void EnterControlMode(ControlModeManager a_controlModeManager)
     {
-
+        HandControl.Instance.SetHandsInControl(true);
+        HandIK.Instance.fingerTracking = true;
+        HandControl.Instance.InitHandPose();
     }
 
     public override void UpdateControlMode(ControlModeManager a_controlModeManager)
     {
-        HandControl.instance.HandTrackingMove();
+        HandControl.Instance.HandTrackingMove();
     }
 
     public override void ExitControlMode(ControlModeManager a_controlModeManager)
     {
-
+        HandControl.Instance.SetHandsInControl(false);
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 public enum NetworkMessageType
@@ -36,11 +37,11 @@ public enum NetworkMessageType
     TransformSyncMessage,
     BoolArrayMessage,
     BoolMessage,
-    
+
     ColorArrayMessage,
     ColorMessage,
     FloatArrayMessage,
-    
+
     PoseArrayMessage,
     PoseMessage,
     QuaternionArrayMessage,
@@ -50,7 +51,7 @@ public enum NetworkMessageType
     Vector2ArrayMessage,
     Vector2Message,
     Vector3ArrayMessage,
-    Vector3Message,
+
     Vector4ArrayMessage,
     Vector4Message,
     SpatialAlignmentMessage,
@@ -58,20 +59,24 @@ public enum NetworkMessageType
     StreamRequestMessage,
     StreamMessage,
     MoveRequestMessage,
-    YieldControlMessage,
+    TransformMessage,
 
     ByteArrayMessage,
+    Vector3Message,
     QuaternionMessage,
     FloatMessage,
 
     CommandMessage,
-    BaseControlMessage,
+    OperationMessage,
+
+    NotificationMessage,
 }
 
 
-public class NetworkMessage
+public class NetworkMessage : Message
 {
-    //Public Variables (truncated to reduce packet size):
+    // Public Variables (truncated to reduce packet size):
+
     /// <summary>
     /// to
     /// </summary>
@@ -112,13 +117,9 @@ public class NetworkMessage
     /// privatekey
     /// </summary>
     public string p;
-    /// <summary>
-    /// platform
-    /// </summary>
-    public PlatformEnum pl;
 
     //Constructors:
-    public NetworkMessage(NetworkMessageType type, NetworkAudience audience, string targetAddress = "", bool reliable = false, string data = "", string guid = "")
+    public NetworkMessage(NetworkMessageType type, NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "", bool reliable = false, string data = "", string guid = "")
     {
         switch (audience)
         {
@@ -133,7 +134,8 @@ public class NetworkMessage
                 break;
 
             case NetworkAudience.NetworkBroadcast:
-                r = 0;
+                // r = 0;
+                r = reliable ? 1 : 0;
                 t = "255.255.255.255";
                 break;
         }
@@ -148,14 +150,22 @@ public class NetworkMessage
             g = guid;
         }
 
-
         f = NetworkUtilities.MyAddress;
         ti = Math.Round(Time.realtimeSinceStartup, 3);
         d = data;
         ty = (short)type;
-        a = TransmissionManager.instance.appKey;
-        p = TransmissionManager.instance.privateKey;
-        pl = TransmissionManager.instance.platform;
+        a = ""; // TransmissionManager.Instance.appKey;
+        p = ""; // TransmissionManager.Instance.privateKey;
+    }
+
+    public override string ProduceString()
+    {
+        return JsonUtility.ToJson(this);
+    }
+
+    public override byte[] ProduceBytes()
+    {
+        return Encoding.UTF8.GetBytes(ProduceString());
     }
 }
 
@@ -169,22 +179,10 @@ public class ByteArrayMessage : NetworkMessage
     public byte[] v;
 
     //Constructors:
-    public ByteArrayMessage(byte[] values, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.ByteArrayMessage, audience, targetAddress, true, data)
+    public ByteArrayMessage(byte[] values, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "")
+        : base(NetworkMessageType.ByteArrayMessage, audience, targetAddress, false, data)
     {
         v = values;
-    }
-}
-
-public class StreamRequestMessage : NetworkMessage
-{
-    /// <summary>
-    /// Camera view
-    /// </summary>
-    public int vi;
-
-    public StreamRequestMessage(int view, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.StreamRequestMessage, audience, targetAddress, true, data)
-    {
-        vi = view;
     }
 }
 
@@ -199,26 +197,35 @@ public class StreamMessage : ByteArrayMessage
     }
 }
 
-public class MoveRequestMessage : NetworkMessage
-{
-    public string se;
+// public class StreamMessage : NetworkMessage
+// {
+//     //Constructors:
+//     public StreamMessage(StreamFrame streamFrame, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "")
+//         : base(NetworkMessageType.StreamMessage, audience, targetAddress, true, data)
+//     {
+//         d = JsonUtility.ToJson(streamFrame);
+//     }
+// }
 
-    public MoveRequestMessage(string siteEnumStr, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.MoveRequestMessage, audience, targetAddress, true, data)
+public class Vector3Message : NetworkMessage
+{
+    /// <summary>
+    /// Label (name) of the quaternion
+    /// </summary>
+    public string l;
+
+    /// <summary>
+    /// The quaternion to be transmitted
+    /// </summary>
+    public Vector3 v;
+
+    public Vector3Message(string a_label, Vector3 a_vector3, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "")
+        : base(NetworkMessageType.Vector3Message, audience, targetAddress, false, data)
     {
-        se = siteEnumStr;
+        l = a_label;
+        v = a_vector3;
     }
 }
-
-public class YieldControlMessage : NetworkMessage
-{
-    public PlatformEnum tp;
-
-    public YieldControlMessage(PlatformEnum targetPlatform, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.YieldControlMessage, audience, targetAddress, true, data)
-    {
-        tp = targetPlatform;
-    }
-}
-
 
 public class QuaternionMessage : NetworkMessage
 {
@@ -232,7 +239,8 @@ public class QuaternionMessage : NetworkMessage
     /// </summary>
     public Quaternion q;
 
-    public QuaternionMessage(string a_label, Quaternion a_quaternion, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.QuaternionMessage, audience, targetAddress, true, data)
+    public QuaternionMessage(string a_label, Quaternion a_quaternion, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "")
+        : base(NetworkMessageType.QuaternionMessage, audience, targetAddress, false, data)
     {
         l = a_label;
         q = a_quaternion;
@@ -251,12 +259,13 @@ public class FloatMessage : NetworkMessage
     /// </summary>
     public float fl;
 
-    public FloatMessage(string a_label, float a_float, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.FloatMessage, audience, targetAddress, true, data)
+    public FloatMessage(string a_label, float a_float, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "")
+        : base(NetworkMessageType.FloatMessage, audience, targetAddress, false, data)
     {
         l = a_label;
         fl = a_float;
     }
-    
+
 }
 
 public class CommandMessage : NetworkMessage
@@ -266,17 +275,19 @@ public class CommandMessage : NetworkMessage
     /// </summary>
     public Command co;
 
-    public CommandMessage(Command a_command, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.CommandMessage, audience, targetAddress, true, data)
+    public CommandMessage(Command a_command, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "")
+        : base(NetworkMessageType.CommandMessage, audience, targetAddress, true, data)
     {
         co = a_command;
     }
 }
 
-public class BaseControlMessage : NetworkMessage
+public class OperationMessage : NetworkMessage
 {
-    public BaseControlInfo bc;
-    public BaseControlMessage(BaseControlInfo a_baseControl, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "") : base(NetworkMessageType.BaseControlMessage, audience, targetAddress, true, data)
+    public Operation o;
+    public OperationMessage(Operation a_operation, string data = "", NetworkAudience audience = NetworkAudience.NetworkBroadcast, string targetAddress = "")
+        : base(NetworkMessageType.OperationMessage, audience, targetAddress, true, data)
     {
-        bc = a_baseControl;
+        o = a_operation;
     }
 }

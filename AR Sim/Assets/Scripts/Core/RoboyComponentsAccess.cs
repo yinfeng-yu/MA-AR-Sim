@@ -5,6 +5,7 @@ using UnityEngine;
 public class RoboyComponentsAccess : MonoBehaviour
 {
     public RoboyHands roboyHands;
+    public RoboyMovement roboyMovement;
 
     public static RoboyComponentsAccess instance;
 
@@ -16,15 +17,4 @@ public class RoboyComponentsAccess : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

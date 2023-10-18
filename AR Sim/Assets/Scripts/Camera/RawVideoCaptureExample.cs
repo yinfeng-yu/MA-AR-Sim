@@ -94,6 +94,19 @@ public class RawVideoCaptureExample : MonoBehaviour
         _privilegeRequester.OnPrivilegesDone += HandlePrivilegesDone;
     }
 
+    void Start()
+    {
+        if (!_isCapturing)
+        {
+            StartCapture();
+        }
+        else
+        {
+            EndCapture();
+        }
+
+    }
+
     /// <summary>
     /// Stop the camera, unregister callbacks, and stop input and privileges APIs.
     /// </summary>
@@ -158,6 +171,7 @@ public class RawVideoCaptureExample : MonoBehaviour
     /// </summary>
     public void StartCapture()
     {
+        Debug.Log("Start Capturing");
         if (!_isCapturing && MLCamera.IsStarted && _isCameraConnected)
         {
             MLResult result = MLCamera.StartRawVideoCapture();

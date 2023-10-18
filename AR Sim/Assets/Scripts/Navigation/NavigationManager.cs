@@ -17,19 +17,19 @@ public class NavigationManager : MonoBehaviour
     #endregion
 
     /// <summary>
-    /// The NavMeshAgent component attached to the main camera.
+    /// The NavMeshAgent component attached to the Roboy.
     /// </summary>
     [SerializeField] private NavMeshAgent _navMeshAgent;
 
-    [SerializeField] private bool m_reachedTarget = true;
-    [SerializeField] private Transform m_target;
-    [SerializeField] private string m_targetStr;
+    [SerializeField] private bool _reachedTarget = true;
 
-    [SerializeField] private float _offest = 0.5f;
+    [SerializeField] private float _offset = 0.5f;
 
     bool _shouldPatrol = false;
     Vector2[] _waypoints;
     int currentWaypoint = 0;
+
+    bool hasSentDisplaceNotification = true;
 
     // Start is called before the first frame update
     void Start()
@@ -40,25 +40,32 @@ public class NavigationManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // if (!m_reachedTarget && Vector3.Distance(_navMeshAgent.gameObject.transform.position, m_target.position) <= _navMeshAgent.stoppingDistance + _offestY)
-        // {
-        //     _navMeshAgent.transform.forward = m_target.forward;
-        //     m_reachedTarget = true;
-        //     _navMeshAgent.enabled = false;
-        // 
-        //     // NotificationManager.instance.NotifyArrived(m_targetStr);
-        // }
+        if (!_shouldPatrol && !_reachedTarget && Vector3.Distance(_navMeshAgent.gameObject.transform.position, _navMeshAgent.destination) <= _navMeshAgent.stoppingDistance + _offset)
+        {
+            _reachedTarget = true;
+            _navMeshAgent.enabled = false;
 
+            var roboyPosition = RoboyComponentsAccess.instance.roboyHands.gameObject.transform.localPosition;
+            NotificationManager.instance.SendNotification(TaskType.Displace, TaskStatus.End, (new Vector2(roboyPosition.x, roboyPosition.z)).ToString());
+            // NotificationManager.instance.NotifyArrived(m_targetStr);
+        }
 
         if (_shouldPatrol)
         {
+            // Debug.Log("patrolling");
             if (_waypoints.Length > currentWaypoint)
             {
                 Vector2 waypoint = _waypoints[currentWaypoint];
-                Vector3 destination = new Vector3(waypoint.x, 0f, waypoint.y);
-                _navMeshAgent.SetDestination(destination);
 
-                if (Vector3.Distance(_navMeshAgent.gameObject.transform.position, destination) <= _navMeshAgent.stoppingDistance + _offest)
+                Vector3 roboyParentPosition = _navMeshAgent.GetComponentInParent<Transform>().parent.position;
+                Vector3 targetPosition = roboyParentPosition + new Vector3(waypoint.x, 0f, waypoint.y);
+
+                // Debug.Log($"target position: {destination}");
+                // Debug.Log($"navagent on navmesh?: {_navMeshAgent.isOnNavMesh}");
+                bool d = _navMeshAgent.SetDestination(targetPosition);
+                // Debug.Log($"successfully set?: {d}");
+
+                if (Vector3.Distance(_navMeshAgent.gameObject.transform.position, targetPosition) <= _navMeshAgent.stoppingDistance + _offset)
                 {
                     currentWaypoint++;
                     if (currentWaypoint == _waypoints.Length)
@@ -69,45 +76,65 @@ public class NavigationManager : MonoBehaviour
 
             }
         }
+
+        TransmissionManager.Instance.SendTo(new Vector3Message("robodyPosition", RoboyComponentsAccess.instance.roboyHands.gameObject.transform.localPosition), Platform.Smartphone);
     }
 
     void SetDestination(Vector3 destination)
     {
-
         _navMeshAgent.SetDestination(destination);
     }
 
     public void SetDestination(Vector2 destination)
     {
-        StopPatrol();
-        _navMeshAgent.enabled = true;
+        hasSentDisplaceNotification = false;
+        _reachedTarget = false;
+        // Debug.Log($"Roboy Parent Name: {_navMeshAgent.GetComponentInParent<Transform>().parent.name}");
+        Vector3 roboyParentPosition = _navMeshAgent.GetComponentInParent<Transform>().parent.position;
+        Vector3 targetPosition = roboyParentPosition + new Vector3(destination.x, 0f, destination.y);
+
+        if (_shouldPatrol)
+        {
+            StopPatrol();
+        }
         
-        _navMeshAgent.SetDestination(new Vector3(destination.x, 0f, destination.y));
+        _navMeshAgent.enabled = true;
+
+        bool d = _navMeshAgent.SetDestination(targetPosition);
+
+        NotificationManager.instance.SendNotification(TaskType.Displace, TaskStatus.Start, "");
+        // Debug.Log($"Successfully set? {d}");
+
+        // Debug.Log($"Set to: {targetPosition}");
     }
 
-    public void GoToTarget(Transform a_target, string a_siteEnumStr)
-    {
-        Debug.Log("Go to target");
-        _navMeshAgent.enabled = true;
-    
-        m_target = a_target;
-        SetDestination(a_target.position);
-    
-        m_targetStr = a_siteEnumStr;
-    
-        m_reachedTarget = false;
-    }
+    // public void GoToTarget(Transform a_target, string a_siteEnumStr)
+    // {
+    //     Debug.Log("Go to target");
+    //     _navMeshAgent.enabled = true;
+    // 
+    //     m_target = a_target;
+    //     SetDestination(a_target.position);
+    // 
+    //     m_targetStr = a_siteEnumStr;
+    // 
+    //     m_reachedTarget = false;
+    // }
 
     public void StartPatrol(Vector2[] waypoints)
     {
         _navMeshAgent.enabled = true;
         _shouldPatrol = true;
         _waypoints = waypoints;
+
+        NotificationManager.instance.SendNotification(TaskType.Patrol, TaskStatus.Start, "");
     }
 
     public void StopPatrol()
     {
         _navMeshAgent.enabled = false;
         _shouldPatrol = false;
+
+        NotificationManager.instance.SendNotification(TaskType.Patrol, TaskStatus.End, "");
     }
 }

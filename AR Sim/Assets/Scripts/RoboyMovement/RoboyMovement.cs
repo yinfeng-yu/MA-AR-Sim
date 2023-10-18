@@ -29,6 +29,12 @@ public class RoboyMovement : MonoBehaviour
     private HorizontalOrbitalSolver horizontalOrbitalSolver;
     private Transform parent;
     // private Transform camera;
+
+    bool isSteering = false;
+    Direction steerDirection = Direction.None;
+    public float steerSpeed = 1f;
+    public float rotateSpeed = 30f;
+
     
     #endregion
     
@@ -73,29 +79,50 @@ public class RoboyMovement : MonoBehaviour
 
     private void Start()
     {
-        horizontalOrbitalSolver = GetComponent<HorizontalOrbitalSolver>();
-        handControl = GetComponent<RoboyHands>();
-        sceneContent = GameObject.Find("+ SceneContent");
-        // OnChangePOV(true);
-        // OnAllowHandMovement(true);
-        parent = transform.parent;
-        transform.parent = null;
-        // camera = Camera.main.transform;
+        // horizontalOrbitalSolver = GetComponent<HorizontalOrbitalSolver>();
+        // handControl = GetComponent<RoboyHands>();
+        // sceneContent = GameObject.Find("+ SceneContent");
+        // // OnChangePOV(true);
+        // // OnAllowHandMovement(true);
+        // parent = transform.parent;
+        // transform.parent = null;
+        // // camera = Camera.main.transform;
     }
 
     private void Update()
     {
-        if (!isFirstPersonView)
+        // if (!isFirstPersonView)
+        // {
+        //     // parent.rotation = YRotation(parent.rotation, Quaternion.Inverse(Camera.main.transform.rotation));
+        //     // cameraPivot.rotation = YRotation(parent.rotation, Quaternion.Inverse(Camera.main.transform.rotation));
+        // }
+        // var roboyTargetPos = Camera.main.transform.position + transform.position - cameraPivot.position;
+        // // transform.rotation = YRotation(transform.rotation, Camera.main.transform.rotation);
+        // transform.position = new Vector3(roboyTargetPos.x, transform.position.y, roboyTargetPos.z);
+        // // cameraPivot.forward = new Vector3(Camera.main.transform.forward.x, 0f, Camera.main.transform.forward.z);
+        // // cameraPivot.position = new Vector3(Camera.main.transform.position.x, 0f, Camera.main.transform.position.z);
+        // // cameraPivot.localPosition = new Vector3(cameraPivot.localPosition.x, 0f, cameraPivot.localPosition.z);
+
+        if (isSteering)
         {
-            // parent.rotation = YRotation(parent.rotation, Quaternion.Inverse(Camera.main.transform.rotation));
-            // cameraPivot.rotation = YRotation(parent.rotation, Quaternion.Inverse(Camera.main.transform.rotation));
+            switch (steerDirection)
+            {
+                case Direction.Forward:
+                    transform.position += transform.forward * steerSpeed * Time.deltaTime;
+                    break;
+                case Direction.Back:
+                    transform.position += -transform.forward * steerSpeed * Time.deltaTime;
+                    break;
+                case Direction.Left:
+                    transform.Rotate(0.0f, -rotateSpeed * Time.deltaTime, 0.0f);
+                    break;
+                case Direction.Right:
+                    transform.Rotate(0.0f, rotateSpeed * Time.deltaTime, 0.0f);
+                    break;
+                default:
+                    break;
+            }
         }
-        var roboyTargetPos = Camera.main.transform.position + transform.position - cameraPivot.position;
-        // transform.rotation = YRotation(transform.rotation, Camera.main.transform.rotation);
-        transform.position = new Vector3(roboyTargetPos.x, transform.position.y, roboyTargetPos.z);
-        // cameraPivot.forward = new Vector3(Camera.main.transform.forward.x, 0f, Camera.main.transform.forward.z);
-        // cameraPivot.position = new Vector3(Camera.main.transform.position.x, 0f, Camera.main.transform.position.z);
-        // cameraPivot.localPosition = new Vector3(cameraPivot.localPosition.x, 0f, cameraPivot.localPosition.z);
     }
 
     private Quaternion YRotation(Quaternion oldRotation, Quaternion rotation)
@@ -103,5 +130,17 @@ public class RoboyMovement : MonoBehaviour
         return Quaternion.Euler(oldRotation.eulerAngles.x ,rotation.eulerAngles.y, oldRotation.eulerAngles.z);
     }
     
+    public void Steer(Direction direction)
+    {
+        if (direction == Direction.None)
+        {
+            isSteering = false;
+        }
+        else
+        {
+            isSteering = true;
 
+        }
+        steerDirection = direction;
+    }
 }
