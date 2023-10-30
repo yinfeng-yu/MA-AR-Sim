@@ -95,6 +95,8 @@ public class CameraStreamer : MonoBehaviour
 
     public TextMeshProUGUI tmp;
 
+    public bool isSendStream = false;
+
     public enum CameraView
     {
         FirstPerson,
@@ -133,15 +135,19 @@ public class CameraStreamer : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (interval > 0)
+        if (isSendStream)
         {
-            interval -= Time.deltaTime;
+            if (interval > 0)
+            {
+                interval -= Time.deltaTime;
+            }
+            else
+            {
+                SendTexture();
+                interval = 1f / frequency;
+            }
         }
-        else
-        {
-            SendTexture();
-            interval = 1f / frequency;
-        }
+        
     }
 
     public void ToggleCameraView()

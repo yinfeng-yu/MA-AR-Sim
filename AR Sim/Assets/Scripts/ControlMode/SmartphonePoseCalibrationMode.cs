@@ -9,18 +9,18 @@ public class SmartphonePoseCalibrationControlMode : BaseControlMode
     
     public bool isCalibrating = true;
 
-    public override void EnterControlMode(ControlModeManager a_controlModeManager)
+    public override void EnterControlMode(ControlModeManager controlModeManager)
     {
-        HandControl.Instance.SetHandsInControl(false);
-        // initOrientation = Camera.main.transform.rotation;
+        HandController.Freeze();
         SmartphoneController.Instance.ShowCalibTarget();
         SmartphoneController.Instance.ShowPointer();
     }
 
-    public override void UpdateControlMode(ControlModeManager a_controlModeManager)
+    public override void UpdateControlMode(ControlModeManager controlModeManager)
     {
         if (isCalibrating)
         {
+            // Debug.Log("Calibrating...");
             Quaternion deviceOrientation;
             Vector3 devicePosition;
 
@@ -41,29 +41,30 @@ public class SmartphonePoseCalibrationControlMode : BaseControlMode
             isCalibrating = !isCalibrating;
             if (isCalibrating)
             {
-                Debug.Log("start calibrating");
+                Debug.Log("Start calibrating");
             }
             else
             {
-                Debug.Log("stop calibrating");
+                Debug.Log("Stop calibrating");
 
                 Vector3 projectionA = Vector3.ProjectOnPlane(Vector3.forward, Vector3.up);
                 Vector3 projectionB = Vector3.ProjectOnPlane(initOrientation * Vector3.forward, Vector3.up);
                 float angle = Vector3.Angle(projectionA, projectionB);
-                HandControl.Instance.initAngleOffsetY = angle;
-                HandControl.Instance.initPositionOffset = initPosition - HandControl.Instance.calibTarget.localPosition;
+                HandController.Instance.initAngleOffsetY = angle;
+                HandController.Instance.initPositionOffset = initPosition - SmartphoneController.Instance.calibTarget.transform.localPosition;
 
-                a_controlModeManager.initOrientation = Quaternion.Inverse(a_controlModeManager.calibTarget.rotation) * initOrientation;
-                a_controlModeManager.initPosition = initPosition;
+                SmartphoneController.Instance.initOrientation = Quaternion.Inverse(SmartphoneController.Instance.calibTarget.transform.rotation) * initOrientation;
+                SmartphoneController.Instance.initPosition = initPosition;
             }
         }
 
 
     }
 
-    public override void ExitControlMode(ControlModeManager a_controlModeManager)
+    public override void ExitControlMode(ControlModeManager controlModeManager)
     {
         SmartphoneController.Instance.HideCalibTarget();
         SmartphoneController.Instance.HidePointer();
+        HandController.Freeze();
     }
 }

@@ -11,16 +11,10 @@ public class Grabbable : MonoBehaviour
 
     public Transform scene;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
     // Update is called once per frame
     void Update()
     {
-        if (Vector3.Distance(HandIK.Instance.leftGripPivot.position, transform.position) <= range)
+        if (Vector3.Distance(HandController.Instance.leftHandIKTarget.position, transform.position) <= range)
         {
             isInRangeLeft = true;
         }
@@ -29,7 +23,7 @@ public class Grabbable : MonoBehaviour
             isInRangeLeft = false;
         }
 
-        if (Vector3.Distance(HandIK.Instance.rightGripPivot.position, transform.position) <= range)
+        if (Vector3.Distance(HandController.Instance.rightHandIKTarget.position, transform.position) <= range)
         {
             isInRangeRight = true;
         }
@@ -38,22 +32,29 @@ public class Grabbable : MonoBehaviour
             isInRangeRight = false;
         }
 
-        if (HandIK.Instance.isLeftGrab && isInRangeLeft)
+        if (FingerController.Instance.isLeftGrab && isInRangeLeft)
         {
             Debug.Log("left grab");
             // transform.position = HandIK.Instance.leftGripPivot.position;
-            transform.SetParent(HandIK.Instance.leftGripPivot);
+            transform.SetParent(FingerController.Instance.leftGripPivot);
+            // GetComponent<Rigidbody>().useGravity = false;
+            // GetComponent<Rigidbody>().velocity = Vector3.zero;
         }
 
-        else if (HandIK.Instance.isRightGrab && isInRangeRight)
+        else if (FingerController.Instance.isRightGrab && isInRangeRight)
         {
             Debug.Log("right grab");
             // transform.position = HandIK.Instance.rightGripPivot.position;
-            transform.SetParent(HandIK.Instance.rightGripPivot);
+            transform.SetParent(FingerController.Instance.rightGripPivot);
+
+            // GetComponent<Rigidbody>().useGravity = false;
+            // GetComponent<Rigidbody>().velocity = Vector3.zero;
         }
 
         else
         {
+
+            // GetComponent<Rigidbody>().useGravity = true;
             transform.SetParent(scene);
         }
     }

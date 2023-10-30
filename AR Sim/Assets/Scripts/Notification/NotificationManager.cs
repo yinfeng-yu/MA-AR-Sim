@@ -2,17 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NotificationManager : MonoBehaviour
+public class NotificationManager : Singleton<NotificationManager>
 {
-    public static NotificationManager instance;
-
-    void Awake()
-    {
-        if (instance != this)
-        {
-            instance = this;
-        }
-    }
     
     public void SendNotification(TaskType taskType, TaskStatus taskStatus, string data)
     {

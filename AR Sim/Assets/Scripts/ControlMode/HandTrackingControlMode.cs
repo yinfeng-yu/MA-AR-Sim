@@ -9,20 +9,19 @@ using MagicLeap;
 public class HandTrackingControlMode : BaseControlMode
 {
 
-    public override void EnterControlMode(ControlModeManager a_controlModeManager)
+    public override void EnterControlMode(ControlModeManager controlModeManager)
     {
-        HandControl.Instance.SetHandsInControl(true);
-        HandIK.Instance.fingerTracking = true;
-        HandControl.Instance.InitHandPose();
+        HandController.Unfreeze();
+        HandController.Instance.InitHandPose();
     }
 
-    public override void UpdateControlMode(ControlModeManager a_controlModeManager)
+    public override void UpdateControlMode(ControlModeManager controlModeManager)
     {
-        HandControl.Instance.HandTrackingMove();
+        HandController.Instance.HandTrackingMove();
     }
 
-    public override void ExitControlMode(ControlModeManager a_controlModeManager)
+    public override void ExitControlMode(ControlModeManager controlModeManager)
     {
-        HandControl.Instance.SetHandsInControl(false);
+        HandController.Freeze();
     }
 }

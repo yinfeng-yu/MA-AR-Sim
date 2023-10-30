@@ -45,8 +45,8 @@ public class NavigationManager : MonoBehaviour
             _reachedTarget = true;
             _navMeshAgent.enabled = false;
 
-            var roboyPosition = RoboyComponentsAccess.instance.roboyHands.gameObject.transform.localPosition;
-            NotificationManager.instance.SendNotification(TaskType.Displace, TaskStatus.End, (new Vector2(roboyPosition.x, roboyPosition.z)).ToString());
+            var roboyPosition = _navMeshAgent.gameObject.transform.localPosition;
+            NotificationManager.Instance.SendNotification(TaskType.Displace, TaskStatus.End, (new Vector2(roboyPosition.x, roboyPosition.z)).ToString());
             // NotificationManager.instance.NotifyArrived(m_targetStr);
         }
 
@@ -77,7 +77,7 @@ public class NavigationManager : MonoBehaviour
             }
         }
 
-        TransmissionManager.Instance.SendTo(new Vector3Message("robodyPosition", RoboyComponentsAccess.instance.roboyHands.gameObject.transform.localPosition), Platform.Smartphone);
+        TransmissionManager.Instance.SendTo(new Vector3Message("robodyPosition", _navMeshAgent.gameObject.transform.localPosition), Platform.Smartphone);
     }
 
     void SetDestination(Vector3 destination)
@@ -102,7 +102,7 @@ public class NavigationManager : MonoBehaviour
 
         bool d = _navMeshAgent.SetDestination(targetPosition);
 
-        NotificationManager.instance.SendNotification(TaskType.Displace, TaskStatus.Start, "");
+        NotificationManager.Instance.SendNotification(TaskType.Displace, TaskStatus.Start, "");
         // Debug.Log($"Successfully set? {d}");
 
         // Debug.Log($"Set to: {targetPosition}");
@@ -127,7 +127,7 @@ public class NavigationManager : MonoBehaviour
         _shouldPatrol = true;
         _waypoints = waypoints;
 
-        NotificationManager.instance.SendNotification(TaskType.Patrol, TaskStatus.Start, "");
+        NotificationManager.Instance.SendNotification(TaskType.Patrol, TaskStatus.Start, "");
     }
 
     public void StopPatrol()
@@ -135,6 +135,6 @@ public class NavigationManager : MonoBehaviour
         _navMeshAgent.enabled = false;
         _shouldPatrol = false;
 
-        NotificationManager.instance.SendNotification(TaskType.Patrol, TaskStatus.End, "");
+        NotificationManager.Instance.SendNotification(TaskType.Patrol, TaskStatus.End, "");
     }
 }

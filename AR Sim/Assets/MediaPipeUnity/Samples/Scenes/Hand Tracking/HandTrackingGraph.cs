@@ -24,14 +24,14 @@ namespace Mediapipe.Unity.HandTracking
     public ModelComplexity modelComplexity = ModelComplexity.Full;
     public int maxNumHands = 2;
 
-    private float _minDetectionConfidence = 0.3f;
+    private float _minDetectionConfidence = 0.5f;
     public float minDetectionConfidence
     {
       get => _minDetectionConfidence;
       set => _minDetectionConfidence = Mathf.Clamp01(value);
     }
 
-    private float _minTrackingConfidence = 0.3f;
+    private float _minTrackingConfidence = 0.5f;
     public float minTrackingConfidence
     {
       get => _minTrackingConfidence;

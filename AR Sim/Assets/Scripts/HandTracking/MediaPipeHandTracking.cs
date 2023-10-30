@@ -84,12 +84,7 @@ namespace Mediapipe.Unity.Tutorial
 
         public bool flipPalm = false;
 
-        public HandIK handIK;
-
-        // public float Q = 0.0001f;
-        // public float R = 0.01f;
-        // KalmanFilterVector3 leftHandKalmanFilter = new KalmanFilterVector3();
-        // KalmanFilterVector3 rightHandKalmanFilter = new KalmanFilterVector3();
+        // public HandIK handIK;
 
         float leftThumbAngleVelocity;
         float leftIndexAngleVelocity;
@@ -103,7 +98,6 @@ namespace Mediapipe.Unity.Tutorial
         float rightRingAngleVelocity;
         float rightPinkyAngleVelocity;
 
-        public float fingerAngleLerpDuration = 0.3f;
 
         [Header("Thumb")]
         [Range(0, 90f)]
@@ -137,47 +131,31 @@ namespace Mediapipe.Unity.Tutorial
 
         struct MPFinger
         {
-            public int rootIndex;
-            public string name;
+            public int root;
+            public Finger finger;
 
-            public MPFinger(int rI, string n)
+            public MPFinger(int root, Finger finger)
             {
-                rootIndex = rI;
-                name = n;
+                this.root = root;
+                this.finger = finger;
             }
         }
 
         MPFinger[] fingers = new[]
             {
-                new MPFinger(1, "leftThumb"),
-                new MPFinger(5, "leftIndex"),
-                new MPFinger(9, "leftMiddle"),
-                new MPFinger(13, "leftRing"),
-                new MPFinger(17, "leftPinky"),
-                new MPFinger(1, "rightThumb"),
-                new MPFinger(5, "rightIndex"),
-                new MPFinger(9, "rightMiddle"),
-                new MPFinger(13, "rightRing"),
-                new MPFinger(17, "rightPinky")
+                new MPFinger(1,  new Finger(Handedness.Left, FingerType.Thumb) ),
+                new MPFinger(5,  new Finger(Handedness.Left, FingerType.Index) ),
+                new MPFinger(9,  new Finger(Handedness.Left, FingerType.Middle)),
+                new MPFinger(13, new Finger(Handedness.Left, FingerType.Ring)  ),
+                new MPFinger(17, new Finger(Handedness.Left, FingerType.Little)),
+
+                new MPFinger(1,  new Finger(Handedness.Right, FingerType.Thumb) ),
+                new MPFinger(5,  new Finger(Handedness.Right, FingerType.Index) ),
+                new MPFinger(9,  new Finger(Handedness.Right, FingerType.Middle)),
+                new MPFinger(13, new Finger(Handedness.Right, FingerType.Ring)  ),
+                new MPFinger(17, new Finger(Handedness.Right, FingerType.Little))
             };
 
-        MPFinger[] leftFingers = new[] 
-            { 
-                new MPFinger(1, "leftThumb"), 
-                new MPFinger(5, "leftIndex"), 
-                new MPFinger(9, "leftMiddle"), 
-                new MPFinger(13, "leftRing"), 
-                new MPFinger(17, "leftPinky")
-            };
-
-        MPFinger[] rightFingers = new[] 
-            { 
-                new MPFinger(1, "rightThumb"), 
-                new MPFinger(5, "rightIndex"), 
-                new MPFinger(9, "rightMiddle"), 
-                new MPFinger(13, "rightRing"), 
-                new MPFinger(17, "rightPinky") 
-            };
 
         private IEnumerator Start()
         {
@@ -201,7 +179,7 @@ namespace Mediapipe.Unity.Tutorial
             _outputTexture = new Texture2D(_width, _height, TextureFormat.RGBA32, false);
             _outputPixelData = new Color32[_width * _height];
 
-            _screen.texture = _outputTexture;
+            // _screen.texture = _outputTexture;
 
             _resourceManager = new StreamingAssetsResourceManager();
 
@@ -282,6 +260,7 @@ namespace Mediapipe.Unity.Tutorial
 
                 if (handLandmarksStream.TryGetNext(out var handLandmarks))
                 {
+                    // Debug.Log("detected");
                     if (handLandmarks != null && handLandmarks.Count > 0)
                     {
                         bool leftHandDetected = false;
@@ -319,10 +298,11 @@ namespace Mediapipe.Unity.Tutorial
                                 foreach (var finger in fingers)
                                 {
                                     float angle;
-                                    if (finger.name.Contains("left"))
+                                    if (finger.finger.handedness == Handedness.Left)
                                     {
-                                        angle = CalculateFingerAngles(finger, leftHandPointsTranslations, leftPalmForward, leftPalmRight)[1];
-                                        SetFingerPercentage(finger, angle, "Left");
+                                        // angle = CalculateFingerAngles(finger, leftHandPointsTranslations, leftPalmForward, leftPalmRight)[1];
+                                        // SetFingerPercentage(finger, angle, "Left");
+                                        FingerController.Instance.UpdateFingerAngles(finger.finger, CalculateFingerAngles(finger, leftHandPointsTranslations, leftPalmForward, leftPalmRight));
                                     }
                                 }
 
@@ -358,10 +338,10 @@ namespace Mediapipe.Unity.Tutorial
                                 foreach (var finger in fingers)
                                 {
                                     float angle;
-                                    if (finger.name.Contains("right"))
+                                    if (finger.finger.handedness == Handedness.Right)
                                     {
-                                        angle = CalculateFingerAngles(finger, rightHandPointsTranslations, rightPalmForward, rightPalmRight)[1];
-                                        SetFingerPercentage(finger, angle, "Right");
+                                        // angle = CalculateFingerAngles(finger, rightHandPointsTranslations, rightPalmForward, rightPalmRight)[1];
+                                        // SetFingerPercentage(finger, angle, "Right");
                                     }
                                 }
 
@@ -406,7 +386,7 @@ namespace Mediapipe.Unity.Tutorial
 
         float[] CalculateFingerAngles(MPFinger finger, Vector3[] handPointsTranslations, Vector3 palmForward, Vector3 palmRight)
         {
-            if (finger.name.Contains("Thumb"))
+            if (finger.finger.fingerType == FingerType.Thumb)
             {
                 Vector3 vec1 = handPointsTranslations[2] - handPointsTranslations[0];
                 Vector3 vec2 = handPointsTranslations[5] - handPointsTranslations[0];
@@ -416,7 +396,7 @@ namespace Mediapipe.Unity.Tutorial
                 palmRight = -Vector3.Cross(palmForward, thumbNorm);
             }
 
-            var root = finger.rootIndex;
+            var root = finger.root;
             Vector3 finger1 = Vector3.ProjectOnPlane((handPointsTranslations[root + 1] - handPointsTranslations[root]), palmRight);
             Vector3 finger2 = Vector3.ProjectOnPlane((handPointsTranslations[root + 2] - handPointsTranslations[root + 1]), palmRight);
             Vector3 finger3 = Vector3.ProjectOnPlane((handPointsTranslations[root + 3] - handPointsTranslations[root + 2]), palmRight);
@@ -425,84 +405,11 @@ namespace Mediapipe.Unity.Tutorial
             float angle3 = - Vector3.SignedAngle(finger3, finger2, palmRight);
             // Debug.Log($"angle1: {angle1}, angle2: {angle2}, angle3: {angle3}");
 
-            handIK.UpdateFingerAngles(finger.name, new[] { angle1, angle2, angle3 });
+            FingerController.Instance.UpdateFingerAngles(finger.finger, new[] { angle1, angle2, angle3 });
             return new[] { angle1, angle2, angle3 };
         }
 
-        void SetFingerPercentage(ref float leftPercentage, ref float rightPercentage, string handedness, float angle, float min, float max, ref float leftVelocity, ref float rightVelocity)
-        {
-            if (handedness == "Left")
-            {
-                var current = leftPercentage;
-                leftPercentage = Mathf.SmoothDamp(
-                    current,
-                    ((Mathf.Clamp(angle, min, max) - min) / (max - min)),
-                    ref leftVelocity,
-                    fingerAngleLerpDuration);
-            }
-            else
-            {
-                var current = rightPercentage;
-                rightPercentage = Mathf.SmoothDamp(
-                    current,
-                    -((Mathf.Clamp(angle, -max, min) + min) / (max - min)),
-                    ref rightVelocity,
-                    fingerAngleLerpDuration);
-            }
-        }
-        void SetFingerPercentage(MPFinger finger, float angle, string handedness)
-        {
-            
-            switch (finger.rootIndex)
-            {
-                case 1:
-                    if (handedness == "Left") handIK.leftThumbGripPercentage = handIK.leftIndexGripPercentage; // ((Mathf.Clamp(leftAngle, minThumb, maxThumb) - minThumb) / (maxThumb - minThumb));
-                    else handIK.rightThumbGripPercentage = handIK.rightIndexGripPercentage;
-                    break;
-                case 5:
-                    SetFingerPercentage( ref handIK.leftIndexGripPercentage,
-                                         ref handIK.rightIndexGripPercentage,
-                                         handedness,
-                                         angle, 
-                                         minIndex, 
-                                         maxIndex, 
-                                         ref leftIndexAngleVelocity,
-                                         ref rightIndexAngleVelocity );
-                    break;
-                case 9:
-                    SetFingerPercentage(ref handIK.leftMiddleGripPercentage,
-                                         ref handIK.rightMiddleGripPercentage,
-                                         handedness,
-                                         angle,
-                                         minMiddle,
-                                         maxMiddle,
-                                         ref leftMiddleAngleVelocity,
-                                         ref rightMiddleAngleVelocity);
-                    break;
-                case 13:
-                    SetFingerPercentage(ref handIK.leftRingGripPercentage,
-                                         ref handIK.rightRingGripPercentage,
-                                         handedness,
-                                         angle,
-                                         minRing,
-                                         maxRing,
-                                         ref leftRingAngleVelocity,
-                                         ref rightRingAngleVelocity);
-                    break;
-                case 17:
-                    SetFingerPercentage(ref handIK.leftPinkyGripPercentage,
-                                         ref handIK.rightPinkyGripPercentage,
-                                         handedness,
-                                         angle,
-                                         minPinky,
-                                         maxPinky,
-                                         ref leftPinkyAngleVelocity,
-                                         ref rightPinkyAngleVelocity);
-                    break;
-                default:
-                    break;
-            }
-        }
+        
 
         void UpdateLines(Transform[] handLines, Vector3[] handPointsTranslations)
         {
@@ -577,19 +484,19 @@ namespace Mediapipe.Unity.Tutorial
             }
         }
 
-        private SidePacket BuildSidePacket(ImageSource imageSource)
-        {
-            var sidePacket = new SidePacket();
-
-            SetImageTransformationOptions(sidePacket, imageSource, true);
-            // sidePacket.Emplace("model_complexity", new IntPacket((int)modelComplexity));
-            sidePacket.Emplace("num_hands", new IntPacket(_maxNumHands));
-
-            // Logger.LogInfo(TAG, $"Model Complexity = {modelComplexity}");
-            Logger.LogInfo($"Max Num Hands = {_maxNumHands}");
-
-            return sidePacket;
-        }
+        // private SidePacket BuildSidePacket(ImageSource imageSource)
+        // {
+        //     var sidePacket = new SidePacket();
+        // 
+        //     SetImageTransformationOptions(sidePacket, imageSource, true);
+        //     // sidePacket.Emplace("model_complexity", new IntPacket((int)modelComplexity));
+        //     sidePacket.Emplace("num_hands", new IntPacket(_maxNumHands));
+        // 
+        //     // Logger.LogInfo(TAG, $"Model Complexity = {modelComplexity}");
+        //     Logger.LogInfo($"Max Num Hands = {_maxNumHands}");
+        // 
+        //     return sidePacket;
+        // }
 
         protected void SetImageTransformationOptions(SidePacket sidePacket, ImageSource imageSource, bool expectedToBeMirrored = false)
         {

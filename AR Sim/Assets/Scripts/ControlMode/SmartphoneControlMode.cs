@@ -9,24 +9,21 @@ using MagicLeap;
 public class SmartphoneControlMode : BaseControlMode
 {
 
-    public override void EnterControlMode(ControlModeManager a_controlModeManager)
+    public override void EnterControlMode(ControlModeManager controlModeManager)
     {
+        HandController.Freeze();
         SmartphoneController.Instance.ShowPointer();
-        // SmartPhoneController.instance.TurnOnPointerLine();
-        // HandControl.instance.SetHandsInControl(true);
-        HandIK.Instance.fingerTracking = false;
-        HandControl.Instance.InitHandPose();
+        HandController.Instance.InitHandPose();
     }
 
-    public override void UpdateControlMode(ControlModeManager a_controlModeManager)
+    public override void UpdateControlMode(ControlModeManager controlModeManager)
     {
-        HandControl.Instance.SmartphoneMove(RoboyComponentsAccess.instance.roboyHands.handedness, a_controlModeManager.initOrientation, a_controlModeManager.initPosition);
+        HandController.Instance.SmartphoneMove(HandController.Instance.currentHandedness, SmartphoneController.Instance.initOrientation, SmartphoneController.Instance.initPosition);
     }
 
-    public override void ExitControlMode(ControlModeManager a_controlModeManager)
+    public override void ExitControlMode(ControlModeManager controlModeManager)
     {
-        SmartphoneController.Instance.ShowPointer();
-        // SmartPhoneController.instance.TurnOffPointerLine();
-        HandControl.Instance.SetHandsInControl(false);
+        SmartphoneController.Instance.HidePointer();
+        HandController.Freeze();
     }
 }

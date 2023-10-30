@@ -8,20 +8,21 @@ public class SmartphonePointerControlMode : BaseControlMode
     {
         SmartphoneController.Instance.ShowPointer();
         SmartphoneController.Instance.ShowPointerLine();
-        // HandControl.instance.SetHandsInControl(true);
-        HandIK.Instance.fingerTracking = false;
-        HandControl.Instance.InitHandPose();
+        SmartphoneController.Instance.SetPointerPosPointerMode(Handedness.Left);
+
+        HandController.Freeze();
+        HandController.Instance.InitHandPose();
     }
 
     public override void UpdateControlMode(ControlModeManager a_controlModeManager)
     {
-        HandControl.Instance.SmartphonePointerMove(RoboyComponentsAccess.instance.roboyHands.handedness);
+        HandController.Instance.SmartphonePointerMove(HandController.Instance.currentHandedness);
     }
 
     public override void ExitControlMode(ControlModeManager a_controlModeManager)
     {
         SmartphoneController.Instance.HidePointer();
         SmartphoneController.Instance.HidePointerLine();
-        HandControl.Instance.SetHandsInControl(false);
+        HandController.Freeze();
     }
 }

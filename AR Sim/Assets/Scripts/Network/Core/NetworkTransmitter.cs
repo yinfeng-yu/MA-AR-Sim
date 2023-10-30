@@ -60,6 +60,8 @@ public class NetworkTransmitter : Transmitter
     public List<string> _confirmedReliableMessages = new List<string>();
     private static Dictionary<string, NetworkMessage> _unconfirmedReliableMessages = new Dictionary<string, NetworkMessage>();
 
+    // public string appKey;
+
     public Dictionary<string, Peer> peers
     {
         get => _peers;
@@ -136,7 +138,7 @@ public class NetworkTransmitter : Transmitter
             //get raw message for key evaluation:
             string serialized = Encoding.UTF8.GetString(bytes);
 
-            // NetworkMessage rawMessage = JsonUtility.FromJson<NetworkMessage>(serialized);
+            NetworkMessage rawMessage = JsonUtility.FromJson<NetworkMessage>(serialized);
 
             // keys evaluations:
             // if (rawMessage.a != instance.appKey)
@@ -144,7 +146,11 @@ public class NetworkTransmitter : Transmitter
             //     //we send the serialized string for easier debug messages:
             //     _receivedMessages.Add(serialized);
             // }
-            _receivedMessages.Add(serialized);
+
+            if (rawMessage.f != NetworkUtilities.MyAddress)
+            {
+                _receivedMessages.Add(serialized);
+            }
 
         }
     }
@@ -158,43 +164,44 @@ public class NetworkTransmitter : Transmitter
             {
                 // get message:
                 NetworkMessage currentMessage = JsonUtility.FromJson<NetworkMessage>(rawMessage);
-                
+
                 // debug:
-                if (debugIncoming)
+                if (debugIncoming && currentMessage.f != NetworkUtilities.MyAddress)
                 {
                     Debug.Log($"Received {rawMessage} from {currentMessage.f}");
                 }
 
+                
                 //parse status:
                 bool needToParse = true;
 
                 //reliable message?
-                if (currentMessage.r == 1)
-                {
-                    if (_confirmedReliableMessages.Contains(currentMessage.g))
-                    {
-                        //we have previously consumed this message but the confirmation failed so we only
-                        //need to focus on sending another confirmation:
-                        needToParse = false;
-                        continue;
-                    }
-                    else
-                    {
-                        //mark this reliable message as confirmed:
-                        _confirmedReliableMessages.Add(currentMessage.g);
-                    }
-
-                    //send back confirmation message with same guid:
-                    NetworkMessage confirmationMessage = new NetworkMessage(
-                        NetworkMessageType.ConfirmedMessage,
-                        NetworkAudience.SinglePeer,
-                        currentMessage.f,
-                        false,
-                        "",
-                        currentMessage.g);
-
-                    Send(confirmationMessage);
-                }
+                // if (currentMessage.r == 1)
+                // {
+                //     if (_confirmedReliableMessages.Contains(currentMessage.g))
+                //     {
+                //         //we have previously consumed this message but the confirmation failed so we only
+                //         //need to focus on sending another confirmation:
+                //         needToParse = false;
+                //         continue;
+                //     }
+                //     else
+                //     {
+                //         //mark this reliable message as confirmed:
+                //         _confirmedReliableMessages.Add(currentMessage.g);
+                //     }
+                // 
+                //     //send back confirmation message with same guid:
+                //     NetworkMessage confirmationMessage = new NetworkMessage(
+                //         NetworkMessageType.ConfirmedMessage,
+                //         NetworkAudience.SinglePeer,
+                //         currentMessage.f,
+                //         false,
+                //         "",
+                //         currentMessage.g);
+                // 
+                //     Send(confirmationMessage);
+                // }
 
                 //parsing needed?
                 if (!needToParse)

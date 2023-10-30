@@ -43,7 +43,7 @@ public class CameraManager : MonoBehaviour
             cameraDic.Add(camInfo.cameraType, tempCamInfo);
         }
 
-        ActivateCamera(ControlMode.MainMenu);
+        ActivateCamera(CameraType.MainMenu);
     }
 
     private void Update()
@@ -63,15 +63,6 @@ public class CameraManager : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
-    {
-        // ActivateCamera(ControlMode.MainMenu);
-        // foreach (CameraInfo camInfo in cameraInfos)
-        // {
-        //     camInfo.camera.transform.rotation = cameraIndex[camInfo.cameraType].camera.transform.rotation;
-        // }
-    }
-
     void CameraOrientaionReset()
     {
         foreach (CameraInfo camInfo in cameraInfos)
@@ -82,110 +73,6 @@ public class CameraManager : MonoBehaviour
             }
         }
     }
-
-    public void ActivateCamera(ControlMode controlMode)
-    {
-        switch (controlMode)
-        {
-            case ControlMode.MainMenu:
-                GetMainMenuCamera().tag = "MainCamera";
-                GetFirstPersonCamera().tag = "Untagged";
-                GetThirdPersonCamera().tag = "Untagged";
-                CameraCache.UpdateCachedMainCamera(GetMainMenuCamera());
-
-                currentCamera = GetMainMenuCamera();
-                CameraOrientaionReset();
-
-                GetMainMenuCamera().enabled = true;
-                GetFirstPersonCamera().enabled = false;
-                GetThirdPersonCamera().enabled = false;
-
-                GetMainMenuCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = true;
-                GetFirstPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-                GetThirdPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-                break;
-
-            case ControlMode.Smartphone:
-                GetMainMenuCamera().tag = "Untagged";
-                GetFirstPersonCamera().tag = "MainCamera";
-                GetThirdPersonCamera().tag = "Untagged";
-                CameraCache.UpdateCachedMainCamera(GetFirstPersonCamera());
-
-                currentCamera = GetFirstPersonCamera();
-                CameraOrientaionReset();
-
-                GetMainMenuCamera().enabled = false;
-                GetFirstPersonCamera().enabled = true;
-                GetThirdPersonCamera().enabled = false;
-
-                GetMainMenuCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-                GetFirstPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = true;
-                GetThirdPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-
-                break;
-
-            case ControlMode.SmartphonePoseCalibration:
-                GetMainMenuCamera().tag = "Untagged";
-                GetFirstPersonCamera().tag = "MainCamera";
-                GetThirdPersonCamera().tag = "Untagged";
-                CameraCache.UpdateCachedMainCamera(GetFirstPersonCamera());
-
-                currentCamera = GetFirstPersonCamera();
-                CameraOrientaionReset();
-
-                GetMainMenuCamera().enabled = false;
-                GetFirstPersonCamera().enabled = true;
-                GetThirdPersonCamera().enabled = false;
-
-                GetMainMenuCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-                GetFirstPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = true;
-                GetThirdPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-
-                break;
-
-            case ControlMode.SmartphonePointer:
-                GetMainMenuCamera().tag = "Untagged";
-                GetFirstPersonCamera().tag = "MainCamera";
-                GetThirdPersonCamera().tag = "Untagged";
-                CameraCache.UpdateCachedMainCamera(GetFirstPersonCamera());
-
-                currentCamera = GetFirstPersonCamera();
-                CameraOrientaionReset();
-
-                GetMainMenuCamera().enabled = false;
-                GetFirstPersonCamera().enabled = true;
-                GetThirdPersonCamera().enabled = false;
-
-                GetMainMenuCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-                GetFirstPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = true;
-                GetThirdPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-
-                break;
-
-            case ControlMode.HandTracking:
-                GetMainMenuCamera().tag = "Untagged";
-                GetFirstPersonCamera().tag = "MainCamera";
-                GetThirdPersonCamera().tag = "Untagged";
-                CameraCache.UpdateCachedMainCamera(GetFirstPersonCamera());
-
-                currentCamera = GetFirstPersonCamera();
-                CameraOrientaionReset();
-
-                GetMainMenuCamera().enabled = false;
-                GetFirstPersonCamera().enabled = true;
-                GetThirdPersonCamera().enabled = false;
-
-                GetMainMenuCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-                GetFirstPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = true;
-                GetThirdPersonCamera().gameObject.GetComponent<TrackedPoseDriver>().enabled = false;
-                break;
-
-            default:
-                break;
-
-        }
-    }
-
 
     public void ActivateCamera(CameraType cameraType)
     {
@@ -232,7 +119,15 @@ public class CameraManager : MonoBehaviour
         CameraOrientaionReset();
     }
 
-    Camera GetMainMenuCamera() => cameraDic[CameraType.MainMenu].camera;
+    Camera GetMainMenuCamera() 
+    { 
+
+        // foreach (var cam in cameraDic.Keys)
+        // {
+        //     Debug.Log(cam);
+        // }
+        return cameraDic[CameraType.MainMenu].camera;
+    }
     Camera GetFirstPersonCamera() => cameraDic[CameraType.FirstPerson].camera;
     Camera GetThirdPersonCamera() => cameraDic[CameraType.ThirdPerson].camera;
     Camera GetBirdsViewCamera() => cameraDic[CameraType.BirdsView].camera;

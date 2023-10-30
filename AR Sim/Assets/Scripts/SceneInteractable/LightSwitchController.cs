@@ -5,20 +5,39 @@ using UnityEngine;
 public class LightSwitchController : MonoBehaviour
 {
     /// <summary>
-    /// Controlled light from the current light switch
+    /// Controlled lights from the current light switch
     /// </summary>
-    [SerializeField] private Light _controlledLight;
+    [SerializeField] private Light[] _controlledLights;
 
     /// <summary>
     /// Whether light is currently on
     /// </summary>
-    private bool _lightOn => _controlledLight.gameObject.activeSelf;
+    private bool _lightsOn = true;
+
+    public float triggerDistance = 0.3f;
+
+    private bool _isTriggered = false;
     
-    private void OnTriggerEnter(Collider other)
+    private void Update()
     {
-        if (other.gameObject.CompareTag("Left") || other.gameObject.CompareTag("Right"))
+        if (Vector3.Distance(FingerController.Instance.leftGripPivot.position, transform.position) <= triggerDistance && !_isTriggered)
         {
-            _controlledLight.gameObject.SetActive(!_lightOn);
+            _isTriggered = true;
+            SwitchLight();
+        }
+
+        if (Vector3.Distance(FingerController.Instance.leftGripPivot.position, transform.position) > triggerDistance && _isTriggered)
+        {
+            _isTriggered = false;
+        }
+    }
+
+    private void SwitchLight()
+    {
+        _lightsOn = !_lightsOn;
+        foreach (Light light in _controlledLights)
+        {
+            light.enabled = _lightsOn;
         }
     }
 

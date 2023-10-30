@@ -87,7 +87,10 @@ public class NetworkMessageHandler : MonoBehaviour
         switch (operation.type)
         {
             case OperationType.Confirm:
-                if (operation.confirm) RemoteInput.SetConfirm();
+                if (operation.confirm)
+                {
+                    RemoteInput.SetConfirm();
+                }
                 break;
 
             case OperationType.ChangeStreamView:
@@ -102,7 +105,7 @@ public class NetworkMessageHandler : MonoBehaviour
                 break;
 
             case OperationType.Freeze:
-                HandControl.Instance.SetHandsInControl(!operation.isFrozen);
+                HandController.SwitchFrozen(operation.isFrozen);
                 break;
          
         }
@@ -119,11 +122,11 @@ public class NetworkMessageHandler : MonoBehaviour
                 {
                     if (ControlModeManager.Instance.currentControlMode == ControlMode.SmartphonePointer)
                     {
-                        if (!command.isGrab) HandIK.Instance.isLeftGrab = !HandIK.Instance.isLeftGrab;
+                        if (!command.isGrab) FingerController.Instance.isLeftGrab = !FingerController.Instance.isLeftGrab;
                     }
                     else
                     {
-                        HandIK.Instance.isLeftGrab = command.isGrab;
+                        FingerController.Instance.isLeftGrab = command.isGrab;
                     }
                     
                 }
@@ -131,11 +134,11 @@ public class NetworkMessageHandler : MonoBehaviour
                 {
                     if (ControlModeManager.Instance.currentControlMode == ControlMode.SmartphonePointer)
                     {
-                        if (!command.isGrab) HandIK.Instance.isRightGrab = !HandIK.Instance.isRightGrab;
+                        if (!command.isGrab) FingerController.Instance.isRightGrab = !FingerController.Instance.isRightGrab;
                     }
                     else
                     {
-                        HandIK.Instance.isRightGrab = command.isGrab;
+                        FingerController.Instance.isRightGrab = command.isGrab;
                     }
                 }
 
@@ -159,8 +162,11 @@ public class NetworkMessageHandler : MonoBehaviour
                 break;
 
             case CommandType.SwitchHand:
-                RoboyComponentsAccess.instance.roboyHands.handedness = command.handedness;
-                HandControl.Instance.currentHandedness = command.handedness;
+                HandController.Instance.currentHandedness = command.handedness;
+                if (ControlModeManager.Instance.currentControlMode == ControlMode.SmartphonePointer)
+                {
+                    SmartphoneController.Instance.SetPointerPosPointerMode(command.handedness);
+                }
                 break;
 
             default:
@@ -169,85 +175,3 @@ public class NetworkMessageHandler : MonoBehaviour
     }
 
 }
-
-
-
-
-// public class NetworkMessageHandler : MonoBehaviour
-// {
-//     // Streaming
-//     public Action<StreamDataHeader, byte[]> streamUpdated;
-// 
-//     public void ProcessRawMessage(string rawMessage)
-//     {
-//         TransmissionManager transmissionManager = GetComponent<TransmissionManager>();
-//         // get message:
-//         NetworkMessage currentMessage = JsonUtility.FromJson<NetworkMessage>(rawMessage);
-// 
-//         // debug:
-//         if (transmissionManager.debugIncoming)
-//         {
-//             Debug.Log($"Received {rawMessage} from {currentMessage.f}");
-//         }
-// 
-//         var peers = transmissionManager.GetPeers();
-// 
-//         switch ((NetworkMessageType)currentMessage.ty)
-//         {
-//             case NetworkMessageType.StreamMessage:
-//                 StreamMessage receivedStreamMessage = NetworkUtilities.UnpackMessage<StreamMessage>(rawMessage);
-//                 StreamDataHeader receivedHeader = JsonUtility.FromJson<StreamDataHeader>(receivedStreamMessage.d);
-//                 streamUpdated?.Invoke(receivedHeader, receivedStreamMessage.v);
-//                 break;
-// 
-//             case NetworkMessageType.AwakeMessage:
-//                 //if this peer hasn't been gone long then fire a recap:
-//                 if (peers.ContainsKey(currentMessage.a))
-//                 {
-//                     // OnPeerFound?.Invoke(currentMessage.f, long.Parse(currentMessage.d));
-//                     peers[currentMessage.a].age = Time.realtimeSinceStartup;
-//                 }
-//                 break;
-// 
-//             case NetworkMessageType.HeartbeatMessage:
-//                 //new peer:
-//                 if (!peers.ContainsKey(currentMessage.a))
-//                 {
-//                     peers.Add(currentMessage.a, new TransmissionManager.Peer(currentMessage.a, currentMessage.f, 0, currentMessage.pl));
-// 
-//                 }
-//                 //catalog heartbeat time:
-//                 peers[currentMessage.a].age = Time.realtimeSinceStartup;
-//                 break;
-// 
-//             case NetworkMessageType.QuaternionMessage:
-//                 // Debug.Log("Quaternion Message Received");
-//                 QuaternionMessage receivedQuaternionMessage = NetworkUtilities.UnpackMessage<QuaternionMessage>(rawMessage);
-//                 TransmissionManager.instance.globalQuaternions[receivedQuaternionMessage.l] = receivedQuaternionMessage.q;
-//                 break;
-// 
-//             case NetworkMessageType.FloatMessage:
-//                 // Debug.Log("Float Message Received");
-//                 FloatMessage receivedFloatMessage = NetworkUtilities.UnpackMessage<FloatMessage>(rawMessage);
-//                 TransmissionManager.instance.globalFloats[receivedFloatMessage.l] = receivedFloatMessage.fl;
-//                 break;
-// 
-//             case NetworkMessageType.CommandMessage:
-//                 CommandMessage receivedCommandMessage = NetworkUtilities.UnpackMessage<CommandMessage>(rawMessage);
-//                 // Debug.Log(receivedCommandMessage == null);
-//                 // Debug.Log(receivedCommandMessage.ToString());
-//                 // Debug.Log(receivedCommandMessage.f == null);
-//                 // Debug.Log(receivedCommandMessage.co == null);
-//                 // Debug.Log(receivedCommandMessage.co.ToString());
-//                 HandleCommand(receivedCommandMessage.co);
-//                 break;
-// 
-//             case NetworkMessageType.BaseControlMessage:
-//                 BaseControlMessage receivedBaseControlMessage = NetworkUtilities.UnpackMessage<BaseControlMessage>(rawMessage);
-//                 HandleBaseControl(receivedBaseControlMessage.bc);
-//                 break;
-//         }
-//     }
-// 
-//     
-// }

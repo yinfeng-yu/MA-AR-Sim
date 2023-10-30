@@ -12,6 +12,7 @@ public enum ControlMode
     SmartphonePoseCalibration,
     HandTracking,
     Steer,
+    Test,
 }
 
 public class ControlModeManager : Singleton<ControlModeManager>
@@ -29,15 +30,12 @@ public class ControlModeManager : Singleton<ControlModeManager>
     SmartphonePointerControlMode smartphonePointerControlMode = new SmartphonePointerControlMode();
     HandTrackingControlMode handTrackingControlMode = new HandTrackingControlMode();
     SteerControlMode steerControlMode = new SteerControlMode();
-
-    public Quaternion initOrientation;
-    public Vector3 initPosition;
-    public Transform calibTarget;
+    TestControlMode testControlMode = new TestControlMode();
 
     private void Start()
     {
         _currentControlMode = mainMenuControlMode;
-        cameraManager.ActivateCamera(CameraType.MainMenu);
+        // cameraManager.ActivateCamera(CameraType.MainMenu);
 
         _currentControlMode.EnterControlMode(this);
     }
@@ -48,18 +46,9 @@ public class ControlModeManager : Singleton<ControlModeManager>
 
     }
 
-    // public void SwitchState(BaseControlMode a_controlMode)
-    // {
-    //     currentControlMode.ExitControlMode(this);
-    //     currentControlMode = a_controlMode;
-    // 
-    //     cameraManager.ActivateCamera(currentControlModeEnum);
-    // 
-    //     a_controlMode.EnterControlMode(this);
-    // }
-
     public void SwitchState(ControlMode controlMode)
     {
+        // Debug.Log($"switch to {controlMode.ToString()}");
         _currentControlMode.ExitControlMode(this);
         
         switch (controlMode)
@@ -74,7 +63,7 @@ public class ControlModeManager : Singleton<ControlModeManager>
                 break;
             case ControlMode.SmartphonePoseCalibration:
                 _currentControlMode = smartphonePoseCalibrationMode;
-                cameraManager.ActivateCamera(CameraType.MainMenu);
+                cameraManager.ActivateCamera(CameraType.FirstPerson);
                 break;
             case ControlMode.SmartphonePointer:
                 _currentControlMode = smartphonePointerControlMode;
@@ -86,6 +75,10 @@ public class ControlModeManager : Singleton<ControlModeManager>
                 break;
             case ControlMode.Steer:
                 _currentControlMode = steerControlMode;
+                cameraManager.ActivateCamera(CameraType.FirstPerson);
+                break;
+            case ControlMode.Test:
+                _currentControlMode = testControlMode;
                 cameraManager.ActivateCamera(CameraType.FirstPerson);
                 break;
             default:
@@ -102,5 +95,6 @@ public class ControlModeManager : Singleton<ControlModeManager>
     public void SwitchToSmartphonePointer() => SwitchState(ControlMode.SmartphonePointer);
     public void SwitchToHandTracking() => SwitchState(ControlMode.HandTracking);
     public void SwitchToSteer() => SwitchState(ControlMode.Steer);
+    public void SwitchToTest() => SwitchState(ControlMode.Test);
     public void SwitchToMainMenu() => SwitchState(ControlMode.MainMenu);
 }

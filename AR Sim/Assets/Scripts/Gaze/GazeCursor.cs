@@ -4,17 +4,11 @@ using UnityEngine;
 
 public class GazeCursor : MonoBehaviour
 {
-    public GazeSelect gazeSelect;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    public GazeSelector gazeSelector;
 
     // Update is called once per frame
     void Update()
     {
-        transform.position = gazeSelect.gazePoint;
-
+        transform.position = gazeSelector.gazePoint;
     }
 }
