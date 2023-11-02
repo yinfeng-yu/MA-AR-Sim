@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Robody : Singleton<Robody>
 {
+    public Transform RobodyTransform;
     public Vector3 position;
     public RobodyMovement movement;
 

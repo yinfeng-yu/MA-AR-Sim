@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GazeSelector : MonoBehaviour
+public class GazeSelector : Singleton<GazeSelector>
 {
     public GameObject selectedObject;
     public Vector3 gazeDirection;
@@ -42,46 +42,7 @@ public class GazeSelector : MonoBehaviour
             
         }
 
-        // int uiLayer = 5;
-        // int layerMask = 1 << uiLayer;
-        // 
-        // Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
-        // RaycastHit hit;
-        // if (Physics.Raycast(ray, out hit, 100f, layerMask))
-        // {
-        //     // RoomVertexHandle hoveredVertexHandle = hit.collider.gameObject.GetComponent<RoomVertexHandle>();
-        //     // selectedVertexHandle = hoveredVertexHandle == null ? selectedVertexHandle : hoveredVertexHandle;
-        //     
-        //     if (hit.transform.gameObject.GetComponent<ARUIInterface>() != null)
-        //     {
-        //         if (selectedObject == null)
-        //         {
-        //             // selectedObject = hit.transform.gameObject;
-        //             // Debug.Log($"Select: " + selectedObject.name);
-        //             // selectedObject.GetComponent<ARUIInterface>().OnSelected();
-        //         }
-        //         else if (selectedObject != null && selectedObject != hit.transform.gameObject)
-        //         {
-        //             // Debug.Log($"Deselect: " + selectedObject.name);
-        //             // selectedObject.GetComponent<ARUIInterface>().OnDeselected();
-        //             // Debug.Log($"Select: " + selectedObject.name);
-        //             // selectedObject = hit.transform.gameObject;
-        //             // selectedObject.GetComponent<ARUIInterface>().OnSelected();
-        //         }
-        //     }
-        // }
-        // else
-        // {
-        //     if (selectedObject != null)
-        //     {
-        //         // Debug.Log($"Deselect: " + selectedObject.name);
-        //         // selectedObject.GetComponent<ARUIInterface>().OnDeselected();
-        //         // selectedObject = null;
-        //     }
-        // }
     }
-
-
 
     void RegisterCurrentGazeTarget()
     {
@@ -98,38 +59,51 @@ public class GazeSelector : MonoBehaviour
         // layer = "SceneUI";
         // layerMask += 1 << LayerMask.NameToLayer(layer);
 
-        GameObject tmp;
+        GameObject newSelected;
 
         // Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
         Ray ray = new Ray(Camera.main.transform.position, gazeDirection);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100f, layerMask))
         {
-            tmp = hit.transform.gameObject;
+            newSelected = hit.transform.gameObject;
             gazePoint = hit.point;
 
+            // If something was selected
             if (selectedObject != null)
             {
-                if (selectedObject.GetComponent<GazeButton>() != null && selectedObject != tmp)
+                // If the old selected object is a GazeButton and is different than the newly selected, call EndGaze() of the old button
+                if (selectedObject.GetComponent<GazeButton>() != null && selectedObject != newSelected)
                 {
                     GazeButton button = selectedObject.GetComponent<GazeButton>();
                     button.EndGaze();
                 }
             }
 
-            if (tmp.GetComponent<GazeButton>() != null)
+            // If the newly selected is a GazeButton
+            if (newSelected.GetComponent<GazeButton>() != null)
             {
-                GazeButton button = tmp.GetComponent<GazeButton>();
+                GazeButton button = newSelected.GetComponent<GazeButton>();
+                // If the GazeButton is not yet gazed, call StartGaze()
                 if (button.isGazeTriggerable && !button.isGazed)
                 {
                     button.StartGaze();
                 }
             }
 
-            selectedObject = tmp;
+            selectedObject = newSelected;
         }
         else
         {
+            if (selectedObject != null)
+            {
+                if (selectedObject.GetComponent<GazeButton>() != null)
+                {
+                    GazeButton button = selectedObject.GetComponent<GazeButton>();
+                    button.EndGaze();
+                }
+            }
+
             selectedObject = null;
         }
 

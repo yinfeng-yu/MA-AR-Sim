@@ -30,11 +30,11 @@ public class SmartphoneController : Singleton<SmartphoneController>
         {
             case Handedness.Left:
                 // smartphonePointer.transform.position = Robody.Instance.position + Vector3.up * 2 + Vector3.left * 0.4f + Vector3.forward * 0.5f;
-                smartphonePointer.transform.position = calibTarget.transform.position - transform.right * 0.4f;
+                smartphonePointer.transform.position = calibTarget.transform.position - transform.right * 0.3f - transform.forward * 0.1f;
                 break;
             case Handedness.Right:
                 // smartphonePointer.transform.position = Robody.Instance.position + Vector3.up * 2 + Vector3.right * 0.4f + Vector3.forward * 0.5f;
-                smartphonePointer.transform.position = calibTarget.transform.position + transform.right * 0.4f;
+                smartphonePointer.transform.position = calibTarget.transform.position + transform.right * 0.3f - transform.forward * 0.1f;
                 break;
             default:
                 break;

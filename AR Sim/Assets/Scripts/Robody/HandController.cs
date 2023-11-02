@@ -35,7 +35,7 @@ public class HandController : Singleton<HandController>
     // public HandTracking HandTracking;
     public float handDistanceRatio = 0.1f;
 
-    private static bool ishandFrozen = true;
+    private static bool _isHandFrozen = true;
 
     // public Transform leftHandPalm;
     public float initAngleOffsetY = 0f;
@@ -58,25 +58,30 @@ public class HandController : Singleton<HandController>
     public bool trackLeftHand = true;
     public bool trackRightHand = false;
 
+    public float minPointerRange = 0.1f;
+    public float maxPointerRange = 1.5f;
+
     bool poseInitialized = false;
 
     public static void Freeze()
     {
         UI.ShowToast("Hands Frozen!", 1.5f);
-        ishandFrozen = true;
+        _isHandFrozen = true;
     }
 
     public static void Unfreeze()
     {
         UI.ShowToast("Hands Unfrozen!", 1.5f);
-        ishandFrozen = false;
+        _isHandFrozen = false;
     }
 
     public static void SwitchFrozen(bool isFrozen)
     {
-        UI.ShowToast(ishandFrozen == true ? "Hands Unfrozen!" : "Hands Frozen!", 1.5f);
-        ishandFrozen = !ishandFrozen;
+        UI.ShowToast(_isHandFrozen == true ? "Hands Unfrozen!" : "Hands Frozen!", 1.5f);
+        _isHandFrozen = !_isHandFrozen;
     }
+
+    public static bool IsHandFrozen => _isHandFrozen;
 
     public void InitHandPose()
     {
@@ -88,9 +93,9 @@ public class HandController : Singleton<HandController>
         // rightHandIKTarget.position = new Vector3(0.5f, 1.6f, 0.7f);
     }
 
-    public void SmartphoneMove(Handedness handedness, Quaternion initOrientation, Vector3 initPosition)
+    public void SmartphoneMove()
     {
-        if (ishandFrozen)
+        if (_isHandFrozen)
         {
             return;
         }
@@ -106,27 +111,49 @@ public class HandController : Singleton<HandController>
         // Debug.Log($"device orientation = {deviceOrientation}");
         // Debug.Log($"original rot = {deviceOrientation}, init rot = {initOrientation}, final rot = {deviceOrientation * Quaternion.Inverse(initOrientation)}");
         smartphone.transform.rotation = deviceOrientation; // Quaternion.Inverse(initOrientation);
-        smartphone.transform.rotation = Quaternion.Euler(Vector3.up * initAngleOffsetY) * smartphone.transform.rotation;
+
+        float robodyRotY = Robody.Instance.RobodyTransform.eulerAngles.y;
+
+        smartphone.transform.rotation = Quaternion.Euler(Vector3.up * robodyRotY) * smartphone.transform.rotation;
 
         // smartphone.transform.position = SmartphoneController.Instance.calibTarget.transform.position +
         //     Mathf.Abs(SmartphoneController.Instance.calibTarget.transform.localPosition.y) * Vector3.up + Quaternion.Euler(Vector3.up * initAngleOffsetY) * (devicePosition - initPositionOffset);
 
         SmartphoneController.Instance.ResetPointerPos();
-        smartphone.transform.position += smartphoneDistanceRatio * (Quaternion.Euler(Vector3.up * initAngleOffsetY) * (devicePosition - initPositionOffset));
+        smartphone.transform.position += smartphoneDistanceRatio * (Quaternion.Euler(Vector3.up * robodyRotY) * (devicePosition - initPositionOffset));
 
 
-        switch (handedness)
+        switch (currentHandedness)
         {
             case Handedness.Left:
-                leftHandIKTarget.rotation = smartphone.transform.rotation 
-                                                * Quaternion.Euler(Vector3.forward * leftHandRotationOffset.z) 
+                var rotationLeft = smartphone.transform.rotation
+                                                * Quaternion.Euler(Vector3.forward * leftHandRotationOffset.z)
                                                 * Quaternion.Euler(Vector3.right * leftHandRotationOffset.x)
                                                 * Quaternion.Euler(Vector3.up * leftHandRotationOffset.y);
-                leftHandIKTarget.position = smartphone.transform.position; // * 2f;
+                var positionLeft = smartphone.transform.position;
+
+                // leftHandIKTarget.rotation = smartphone.transform.rotation 
+                //                                 * Quaternion.Euler(Vector3.forward * leftHandRotationOffset.z) 
+                //                                 * Quaternion.Euler(Vector3.right * leftHandRotationOffset.x)
+                //                                 * Quaternion.Euler(Vector3.up * leftHandRotationOffset.y);
+                // leftHandIKTarget.position = smartphone.transform.position;
+
+                MoveIKTarget(leftHandIKTarget, positionLeft, rotationLeft, ref leftPosLerpVelocity, ref leftRotLerpVelocity);
                 break;
             case Handedness.Right:
-                rightHandIKTarget.rotation = smartphone.transform.rotation; // * Quaternion.Euler(Vector3.forward * rightHandRotationZOffset);
-                rightHandIKTarget.localPosition = smartphone.transform.localPosition; // * 2f;
+                var rotationRight = smartphone.transform.rotation
+                                                * Quaternion.Euler(Vector3.forward * rightHandRotationOffset.z)
+                                                * Quaternion.Euler(Vector3.right * rightHandRotationOffset.x)
+                                                * Quaternion.Euler(Vector3.up * rightHandRotationOffset.y);
+                var positionRight = smartphone.transform.position;
+
+                // rightHandIKTarget.rotation = smartphone.transform.rotation
+                //                                 * Quaternion.Euler(Vector3.forward * rightHandRotationOffset.z)
+                //                                 * Quaternion.Euler(Vector3.right * rightHandRotationOffset.x)
+                //                                 * Quaternion.Euler(Vector3.up * rightHandRotationOffset.y);
+                // rightHandIKTarget.position = smartphone.transform.position;
+
+                MoveIKTarget(rightHandIKTarget, positionRight, rotationRight, ref rightPosLerpVelocity, ref rightRotLerpVelocity);
                 break;
             default:
                 break;
@@ -134,9 +161,9 @@ public class HandController : Singleton<HandController>
 
     }
 
-    public void SmartphonePointerMove(Handedness handedness)
+    public void SmartphonePointerMove()
     {
-        if (ishandFrozen)
+        if (_isHandFrozen)
         {
             return;
         }
@@ -150,13 +177,15 @@ public class HandController : Singleton<HandController>
 
         GlobalVariableManager.Instance.GlobalQuaternions.TryGetValue("deviceOrientation", out deviceOrientation);
         GlobalVariableManager.Instance.GlobalFloats.TryGetValue("deviceRange", out deviceRange);
+
+        deviceRange = Mathf.Lerp(minPointerRange, maxPointerRange, deviceRange);
         
         smartphonePointer.transform.localRotation = deviceOrientation;
         SmartphoneController.Instance.SetPointerPosPointerMode(currentHandedness);
 
         pointerLine.transform.localScale = new Vector3(pointerLine.transform.localScale.x, pointerLine.transform.localScale.y, deviceRange);
 
-        switch (handedness)
+        switch (currentHandedness)
         {
             case Handedness.Left:
                 var leftTargetRotation = smartphonePointer.transform.rotation * Quaternion.Euler(Vector3.forward * leftHandRotationOffset.z)
@@ -184,58 +213,56 @@ public class HandController : Singleton<HandController>
     public void HandTrackingMove()
     {
         
-        if (ishandFrozen)
+        if (_isHandFrozen)
         {
             return;
         }
 
-        float videoScreenWidth = 640;
-        float videoScreenHeight = 480;
-        float widthSVRatio = Screen.width / videoScreenWidth;
-        float heightSVRatio = Screen.height / videoScreenHeight;
-
-        float leftHandScreenPosX = widthSVRatio * (videoScreenWidth / 2 + MediaPipeHandTracking.Instance.leftHandRootScreenPos[0]);
-        float leftHandScreenPosY = heightSVRatio * (videoScreenHeight / 2 + MediaPipeHandTracking.Instance.leftHandRootScreenPos[1]);
-
-        float rightHandScreenPosX = widthSVRatio * (videoScreenWidth / 2 + MediaPipeHandTracking.Instance.rightHandRootScreenPos[0]);
-        float rightHandScreenPosY = heightSVRatio * (videoScreenHeight / 2 + MediaPipeHandTracking.Instance.rightHandRootScreenPos[1]);
-
-        Vector3 leftHandWorldPos = Camera.main.ScreenToWorldPoint(
-            new Vector3(leftHandScreenPosX, leftHandScreenPosY, MediaPipeHandTracking.Instance.leftHandDistance * handDistanceRatio)
-            ) + MediaPipeHandTracking.Instance.leftHandRootTranslation;
-
-        Vector3 rightHandWorldPos = Camera.main.ScreenToWorldPoint(
-            new Vector3(rightHandScreenPosX, rightHandScreenPosY, MediaPipeHandTracking.Instance.rightHandDistance * handDistanceRatio)
-            ) + MediaPipeHandTracking.Instance.rightHandRootTranslation;
-
         // Debug.Log($"screen width / height = {Screen.width} / {Screen.height}, screen pos raw = ({MediaPipeHandTracking.Instance.handRootScreenPos[0]}, {MediaPipeHandTracking.Instance.handRootScreenPos[1]}), " +
         //     $"hand screen pos = ({handScreenPosX}, {handScreenPosY}), to world = {leftHandWorldPos}");
 
-        Quaternion leftLookRotation = MediaPipeHandTracking.Instance.leftPalmForward == Vector3.zero ?
-            leftHandIKTarget.rotation : Quaternion.LookRotation(MediaPipeHandTracking.Instance.leftPalmForward, MediaPipeHandTracking.Instance.leftPalmNorm);
-
-        Quaternion rightLookRotation = MediaPipeHandTracking.Instance.rightPalmForward == Vector3.zero ?
-            rightHandIKTarget.rotation : Quaternion.LookRotation(MediaPipeHandTracking.Instance.rightPalmForward, -MediaPipeHandTracking.Instance.rightPalmNorm);
-
-        if (trackLeftHand)
+        switch (currentHandedness)
         {
-            try
-            {
-                MediaPipeHandTracking.Instance.leftHandSkeleton.position = leftHandWorldPos;
-            }
-            catch (Exception e) { }
-            MoveIKTarget(leftHandIKTarget, MediaPipeHandTracking.Instance.leftHandSkeleton.position, leftLookRotation, ref leftPosLerpVelocity, ref leftRotLerpVelocity);
+            case Handedness.Left:
+                Quaternion leftLookRotation = MediaPipeHandTracking.Instance.palmForward == Vector3.zero ?
+                    leftHandIKTarget.rotation : Quaternion.LookRotation(MediaPipeHandTracking.Instance.palmForward, -MediaPipeHandTracking.Instance.palmNorm);
+                MoveIKTarget(leftHandIKTarget, MediaPipeHandTracking.Instance.handSkeleton.position, leftLookRotation, ref leftPosLerpVelocity, ref leftRotLerpVelocity);
+
+                break;
+
+            case Handedness.Right:
+                Quaternion rightLookRotation = MediaPipeHandTracking.Instance.palmForward == Vector3.zero ?
+                    rightHandIKTarget.rotation : Quaternion.LookRotation(MediaPipeHandTracking.Instance.palmForward, -MediaPipeHandTracking.Instance.palmNorm);
+                MoveIKTarget(rightHandIKTarget, MediaPipeHandTracking.Instance.handSkeleton.position, rightLookRotation, ref rightPosLerpVelocity, ref rightRotLerpVelocity);
+                
+                break;
+            default:
+                break;
         }
 
-        if (trackRightHand)
-        {
-            try
-            {
-                MediaPipeHandTracking.Instance.rightHandSkeleton.position = rightHandWorldPos;
-            }
-            catch (Exception e) { }
-            MoveIKTarget(rightHandIKTarget, MediaPipeHandTracking.Instance.rightHandSkeleton.position, rightLookRotation, ref rightPosLerpVelocity, ref rightRotLerpVelocity);
-        }
+        // if (trackLeftHand)
+        // {
+        //     try
+        //     {
+        //         MediaPipeHandTracking.Instance.leftHandSkeleton.position = leftHandWorldPos;
+        //         MediaPipeHandTracking.Instance.leftHandSkeleton.LookAt(MediaPipeHandTracking.Instance.leftHandSkeleton.position + Camera.main.transform.forward);
+        // 
+        //     }
+        //     catch { }
+        //     MoveIKTarget(leftHandIKTarget, MediaPipeHandTracking.Instance.leftHandSkeleton.position, leftLookRotation, ref leftPosLerpVelocity, ref leftRotLerpVelocity);
+        // }
+        // 
+        // if (trackRightHand)
+        // {
+        //     try
+        //     {
+        //         MediaPipeHandTracking.Instance.rightHandSkeleton.position = rightHandWorldPos;
+        //         MediaPipeHandTracking.Instance.rightHandSkeleton.LookAt(MediaPipeHandTracking.Instance.rightHandSkeleton.position + Camera.main.transform.forward);
+        // 
+        //     }
+        //     catch { }
+        //     MoveIKTarget(rightHandIKTarget, MediaPipeHandTracking.Instance.rightHandSkeleton.position, rightLookRotation, ref rightPosLerpVelocity, ref rightRotLerpVelocity);
+        // }
     }
 
     Quaternion SmoothDamp(Quaternion rot, Quaternion target, ref Quaternion deriv, float time)
@@ -290,7 +317,7 @@ public class HandController : Singleton<HandController>
 
     public void ControllerMove()
     {
-        if (ishandFrozen)
+        if (_isHandFrozen)
         {
             return;
         }

@@ -51,7 +51,7 @@ public class RawVideoCapture : MonoBehaviour
     // Is the camera currently recording
     private bool _isCapturing;
 
-    private bool _isCameraConnected = false;
+    [SerializeField] private bool _isCameraConnected = false;
 
     private float _captureStartTime;
 
@@ -66,7 +66,7 @@ public class RawVideoCapture : MonoBehaviour
     // Using Awake so that Privileges is set before PrivilegeRequester Start
     void Awake()
     {
-        // enabled = false;
+        enabled = false;
 
         // if (_controllerConnectionHandler == null)
         // {
@@ -86,12 +86,12 @@ public class RawVideoCapture : MonoBehaviour
         //     return;
         // }
 
-        // enabled = true;
+        enabled = true;
 
-        // _privilegeRequester = GetComponent<MLPrivilegeRequesterBehavior>();
-        // 
-        // // Before enabling the Camera, the scene must wait until the privileges have been granted.
-        // _privilegeRequester.OnPrivilegesDone += HandlePrivilegesDone;
+        _privilegeRequester = GetComponent<MLPrivilegeRequesterBehavior>();
+        
+        // Before enabling the Camera, the scene must wait until the privileges have been granted.
+        _privilegeRequester.OnPrivilegesDone += HandlePrivilegesDone;
     }
 
     void Start()
@@ -166,22 +166,39 @@ public class RawVideoCapture : MonoBehaviour
     }
     #endregion
 
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (!_isCapturing)
+            {
+                StartCapture();
+            }
+            else
+            {
+                EndCapture();
+            }
+        }
+    }
+
     #region Public Methods
     /// <summary>
     /// Start capturing raw video.
     /// </summary>
     public void StartCapture()
     {
+        // MLCVCamera
         if (!_isCapturing && MLCamera.IsStarted && _isCameraConnected)
         {
             MLResult result = MLCamera.StartRawVideoCapture();
-            Debug.Log("Capturing Started");
+            Debug.Log(result.Result);
             if (result.IsOk)
             {
+                Debug.Log("Capturing Started");
                 _isCapturing = true;
                 _captureStartTime = Time.time;
                 OnVideoCaptureStarted?.Invoke();
-                // SetupCameraIntrinsics();
+                SetupCameraIntrinsics();
             }
             else
             {
@@ -200,25 +217,25 @@ public class RawVideoCapture : MonoBehaviour
     /// </summary>
     public void EndCapture()
     {
-        // if (_isCapturing)
-        // {
-        //     MLResult result = MLCamera.StopVideoCapture();
-        //     if (result.IsOk)
-        //     {
-        //         _isCapturing = false;
-        //         _captureStartTime = 0;
-        //         OnVideoCaptureEnded?.Invoke();
-        //     }
-        //     else
-        //     {
-        //         CheckPrivilegeDenied(result);
-        //         Debug.LogErrorFormat("Error: RawVideoCaptureExample failed to end raw video capture. Error Code: {0}", MLCamera.GetErrorCode().ToString());
-        //     }
-        // }
-        // else
-        // {
-        //     Debug.LogError("Error: RawVideoCaptureExample failed to end raw video capture because the camera is not capturing.");
-        // }
+        if (_isCapturing)
+        {
+            MLResult result = MLCamera.StopVideoCapture();
+            if (result.IsOk)
+            {
+                _isCapturing = false;
+                _captureStartTime = 0;
+                OnVideoCaptureEnded?.Invoke();
+            }
+            else
+            {
+                CheckPrivilegeDenied(result);
+                Debug.LogErrorFormat("Error: RawVideoCaptureExample failed to end raw video capture. Error Code: {0}", MLCamera.GetErrorCode().ToString());
+            }
+        }
+        else
+        {
+            Debug.LogError("Error: RawVideoCaptureExample failed to end raw video capture because the camera is not capturing.");
+        }
     }
     #endregion
 
@@ -245,6 +262,7 @@ public class RawVideoCapture : MonoBehaviour
         if (result.IsOk)
         {
             Debug.Log("MLCamera Connected!");
+            enabled = true;
             MLCamera.OnRawVideoFrameAvailableYUV += OnRawCaptureDataReceived;
             _isCameraConnected = true;
         }
@@ -351,6 +369,7 @@ public class RawVideoCapture : MonoBehaviour
         // }
     }
 
+
     /// <summary>
     /// Handles the event for raw capture data recieved, and forwards it to any listeners.
     /// Sets the orientation of the framePoseTransform to the current frame pose.
@@ -358,7 +377,7 @@ public class RawVideoCapture : MonoBehaviour
     /// <param name="extras">Contains timestamp to use with GetFramePose, also forwarded to listeners.</param>
     /// <param name="frameData">Forwarded to listeners.</param>
     /// <param name="frameMetadata">Forwarded to listeners.</param>
-    private void OnRawCaptureDataReceived(MLCamera.ResultExtras extras, MLCamera.YUVFrameInfo frameData, MLCamera.FrameMetadata frameMetadata)
+    public void OnRawCaptureDataReceived(MLCamera.ResultExtras extras, MLCamera.YUVFrameInfo frameData, MLCamera.FrameMetadata frameMetadata)
     {
         Debug.Log("raw received");
         Matrix4x4 matrix = Matrix4x4.identity;

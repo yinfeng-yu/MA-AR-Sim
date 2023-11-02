@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3657864479933981668}
+  - component: {fileID: 5174279685627031556}
   m_Layer: 0
   m_Name: Chair
   m_TagString: Untagged
@@ -31,6 +32,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 120.16, z: 0}
+--- !u!65 &5174279685627031556
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5665520026877759321}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.688184, y: 1.1429887, z: 0.8202431}
+  m_Center: {x: 0.0514992, y: 0.55679035, z: -0.0055843303}
 --- !u!1001 &2525847610068321668
 PrefabInstance:
   m_ObjectHideFlags: 0

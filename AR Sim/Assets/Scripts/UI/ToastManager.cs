@@ -7,8 +7,7 @@ using UnityEngine;
 
 public class ToastManager : Singleton<ToastManager>
 {
-    [SerializeField] private GameObject _toast;
-    [SerializeField] private TextMeshPro _toastText;
+    [SerializeField] private Toast _toast;
 
     public float lifetime;
     private float _elapsedTime = 0f;
@@ -18,29 +17,30 @@ public class ToastManager : Singleton<ToastManager>
     {
         if (_toast != null)
         {
-            _toast.SetActive(true);
+            _toast.ShowToast();
+            _toast.SetToastText(text);
         }
 
         _isToastShown = true;
 
         lifetime = timeout;
-        _toastText.text = text;
     }
 
     void HideToast()
     {
         if (_toast != null)
         {
-            _toast.SetActive(false);
+            _toast.HideToast();
         }
+
+        _isToastShown = false;
     }
 
 
     void Start()
     {
-        _toast = GameObject.Find("Toast");
-        _toastText = _toast.GetComponentInChildren<TextMeshPro>();
-        _toast.SetActive(false);
+        _toast = FindObjectOfType<Toast>();
+        HideToast();
     }
 
     void Update()

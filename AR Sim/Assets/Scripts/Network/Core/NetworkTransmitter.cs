@@ -109,6 +109,7 @@ public class NetworkTransmitter : Transmitter
         Send(new NetworkMessage(NetworkMessageType.AwakeMessage, NetworkAudience.NetworkBroadcast, "", true, _age.ToString()));
         
         StartCoroutine(Heartbeat());
+        StartCoroutine(ReliableRetry());
     }
     private void OnDestroy()
     {
@@ -170,38 +171,46 @@ public class NetworkTransmitter : Transmitter
                 {
                     Debug.Log($"Received {rawMessage} from {currentMessage.f}");
                 }
-
                 
-                //parse status:
+                // parse status:
                 bool needToParse = true;
 
-                //reliable message?
-                // if (currentMessage.r == 1)
-                // {
-                //     if (_confirmedReliableMessages.Contains(currentMessage.g))
-                //     {
-                //         //we have previously consumed this message but the confirmation failed so we only
-                //         //need to focus on sending another confirmation:
-                //         needToParse = false;
-                //         continue;
-                //     }
-                //     else
-                //     {
-                //         //mark this reliable message as confirmed:
-                //         _confirmedReliableMessages.Add(currentMessage.g);
-                //     }
-                // 
-                //     //send back confirmation message with same guid:
-                //     NetworkMessage confirmationMessage = new NetworkMessage(
-                //         NetworkMessageType.ConfirmedMessage,
-                //         NetworkAudience.SinglePeer,
-                //         currentMessage.f,
-                //         false,
-                //         "",
-                //         currentMessage.g);
-                // 
-                //     Send(confirmationMessage);
-                // }
+                // reliable message?
+                if (currentMessage.r == 1)
+                {
+                    if (_confirmedReliableMessages.Contains(currentMessage.g))
+                    {
+                        // we have previously consumed this message but the confirmation failed so we only
+                        // need to focus on sending another confirmation:
+                        needToParse = false;
+                        // continue;
+                    }
+                    else
+                    {
+                        // mark this reliable message as confirmed:
+                        _confirmedReliableMessages.Add(currentMessage.g);
+                    }
+                
+                    //send back confirmation message with same guid:
+                    NetworkMessage confirmationMessage = new NetworkMessage(
+                        NetworkMessageType.ConfirmedMessage,
+                        NetworkAudience.NetworkBroadcast,
+                        currentMessage.f,
+                        false,
+                        "",
+                        currentMessage.g);
+                
+                    Send(confirmationMessage);
+                }
+
+                if (currentMessage.ty == (short) NetworkMessageType.ConfirmedMessage)
+                {
+                    // confirmed!
+                    // Debug.Log("Sent Reliable Message Confirmed!");
+                    _unconfirmedReliableMessages.Remove(currentMessage.g);
+                    // OnSendMessageSuccess?.Invoke(currentMessage.g);
+                    needToParse = false;
+                }
 
                 //parsing needed?
                 if (!needToParse)
@@ -220,20 +229,20 @@ public class NetworkTransmitter : Transmitter
     {
         NetworkMessage networkMessage = (NetworkMessage) message;
 
-        //reliable logging:
+        // reliable logging:
         if (networkMessage.r == 1)
         {
             if (!_unconfirmedReliableMessages.ContainsKey(networkMessage.g))
             {
-                // set target counts:
-                if (string.IsNullOrEmpty(networkMessage.t))
-                {
-                    networkMessage.ts = _peers.Count;
-                }
-                else
-                {
-                    networkMessage.ts = 1;
-                }
+                // // set target counts:
+                // if (string.IsNullOrEmpty(networkMessage.t))
+                // {
+                //     networkMessage.ts = _peers.Count;
+                // }
+                // else
+                // {
+                //     networkMessage.ts = 1;
+                // }
 
                 _unconfirmedReliableMessages.Add(networkMessage.g, networkMessage);
             }
@@ -290,26 +299,10 @@ public class NetworkTransmitter : Transmitter
     {
         while (true)
         {
-            //iterate a copy so we don't have issues with inbound confirmations:
+            // iterate a copy so we don't have issues with inbound confirmations:
             foreach (var item in _unconfirmedReliableMessages.Values.ToArray())
             {
-                if (Time.realtimeSinceStartup - item.ti < _maxResendDuration)
-                {
-                    //resend:
-                    Send(item);
-                }
-                else
-                {
-                    //TODO: add explict list of who didn't get it for KnownPeers intended messages:
-                    //reliable message send failed - only if we have some targets left, otherwise there 
-                    //were no recipients to begin with which easily happens if someone attempted a KnownPeers
-                    //send when no one was around:
-                    if (item.ts != 0)
-                    {
-                        // instance.OnSendMessageFailure?.Invoke(item.g);
-                    }
-                    _unconfirmedReliableMessages.Remove(item.g);
-                }
+                Send(item);
             }
 
             //loop:

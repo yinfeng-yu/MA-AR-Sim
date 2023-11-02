@@ -168,7 +168,7 @@ public class FingerController : Singleton<FingerController>
     // Update is called once per frame
     void Update()
     {
-        if (ControlModeManager.Instance.currentControlMode == ControlMode.HandTracking)
+        if (ControlModeManager.Instance.currentControlMode == ControlMode.HandTracking && !HandController.IsHandFrozen)
         {
             UpdatePercentages();
             UpdateGrip();
@@ -279,6 +279,7 @@ public class FingerController : Singleton<FingerController>
     {
         foreach (Finger finger in FingerBones.Keys)
         {
+            // Debug.Log($"finger: {finger.handedness} {finger.fingerType}, percentage: {fingerPercentages[finger]}");
             Grip(finger, fingerPercentages[finger]);
         }
     }
@@ -351,73 +352,9 @@ public class FingerController : Singleton<FingerController>
 
     public void UpdateFingerAngles(Finger finger, float[] angles)
     {
+        // Debug.Log($"angles: [{angles[0]}, {angles[1]}, {angles[2]}]");
         fingerAngles[finger] = angles;
-        // int i = 0;
-        // 
-        // foreach (var bone in FingerBones[finger])
-        // {
-        //     try
-        //     {
-        //         // Debug.Log($"th: {ThumbGrip.Length}, in: {IndexGrip.Length}, mi: {MiddleGrip.Length}, ri: {RingGrip.Length}, pi:{PinkyGrip.Length}");
-        //         if (finger.fingerType == FingerType.Thumb)
-        //         {
-        //             if (finger.Contains("left"))
-        //             {
-        //                 leftThumbAngles[i] = Quaternion.Euler(angles[i], i == 0 ? -90 : 0, -30);
-        //             }
-        //             else
-        //             {
-        //                 RightHandBones.ThumbAngles[i] = Quaternion.Euler(angles[i], i == 0 ? 90 : 0, 30);
-        //             }
-        //         }
-        //         else if (finger.Contains("Index"))
-        //         {
-        //             if (finger.Contains("left"))
-        //             {
-        //                 LeftHandBones.IndexAngles[i] = Quaternion.Euler(angles[i], i == 0 ? -90 : 0, 0);
-        //             }
-        //             else
-        //             {
-        //                 RightHandBones.IndexAngles[i] = Quaternion.Euler(angles[i], i == 0 ? 90 : 0, 0);
-        //             }
-        //         }
-        //         else if (finger.Contains("Middle"))
-        //         {
-        //             if (finger.Contains("left"))
-        //             {
-        //                 LeftHandBones.MiddleAngles[i] = Quaternion.Euler(angles[i], i == 0 ? -90 : 0, 0);
-        //             }
-        //             else
-        //             {
-        //                 RightHandBones.MiddleAngles[i] = Quaternion.Euler(angles[i], i == 0 ? 90 : 0, 0);
-        //             }
-        //         }
-        //         else if (finger.Contains("Ring"))
-        //         {
-        //             if (finger.Contains("left"))
-        //             {
-        //                 LeftHandBones.RingAngles[i] = Quaternion.Euler(angles[i], i == 0 ? -90 : 0, 0);
-        //             }
-        //             else
-        //             {
-        //                 RightHandBones.RingAngles[i] = Quaternion.Euler(angles[i], i == 0 ? 90 : 0, 0);
-        //             }
-        //         }
-        //         else if (finger.Contains("Pinky"))
-        //         {
-        //             if (finger.Contains("left"))
-        //             {
-        //                 LeftHandBones.PinkyAngles[i] = Quaternion.Euler(angles[i], i == 0 ? -90 : 0, 0);
-        //             }
-        //             else
-        //             {
-        //                 RightHandBones.PinkyAngles[i] = Quaternion.Euler(angles[i], i == 0 ? 90 : 0, 0);
-        //             }
-        //         }
-        //     }
-        //     catch (Exception e) { Debug.Log(e); }
-        //     i++;
-        // }
+        // Debug.Log($"fingerAngles: [{fingerAngles[finger][0]}, {fingerAngles[finger][1]}, {fingerAngles[finger][2]}]");
     }
 
     private void UpdatePercentages()
@@ -425,32 +362,11 @@ public class FingerController : Singleton<FingerController>
         foreach (var keyValue in fingerAngles)
         {
             var finger = keyValue.Key;
-            var angle = keyValue.Value;
-            SetFingerPercentage(finger, angle[1]);
+            var angles = keyValue.Value;
+            SetFingerPercentage(finger, angles[1]);
         }
     }
 
-    // void SetFingerPercentage(ref float leftPercentage, ref float rightPercentage, Handedness handedness, float angle, float min, float max, ref float leftVelocity, ref float rightVelocity)
-    // {
-    //     if (handedness == Handedness.Left)
-    //     {
-    //         var current = leftPercentage;
-    //         leftPercentage = Mathf.SmoothDamp(
-    //             current,
-    //             ((Mathf.Clamp(angle, min, max) - min) / (max - min)),
-    //             ref leftVelocity,
-    //             fingerAngleLerpDuration);
-    //     }
-    //     else if (handedness == Handedness.Right)
-    //     {
-    //         var current = rightPercentage;
-    //         rightPercentage = Mathf.SmoothDamp(
-    //             current,
-    //             -((Mathf.Clamp(angle, -max, min) + min) / (max - min)),
-    //             ref rightVelocity,
-    //             fingerAngleLerpDuration);
-    //     }
-    // }
 
     void SetFingerPercentage(Finger finger, float angle)
     {
@@ -459,68 +375,7 @@ public class FingerController : Singleton<FingerController>
                                                      ((Mathf.Clamp(angle, 0, fingerGripAngles[finger])) / (fingerGripAngles[finger])),
                                                      ref angleVelocity,
                                                      fingerAngleLerpDuration);
+        // Debug.Log($"fingerPercentages: {fingerPercentages[finger]}, angle: {angle}");
         fingerAngleVelocities[finger] = angleVelocity;
-
-        // switch (finger.fingerType)
-        // {
-        //     case FingerType.Thumb:
-        //         var angleVelocity = fingerAngleVelocities[finger];
-        //         fingerPercentages[finger] = Mathf.SmoothDamp(fingerPercentages[finger],
-        //                                                      ((Mathf.Clamp(angle, 0, fingerGripAngles[finger])) / (fingerGripAngles[finger])),
-        //                                                      ref angleVelocity,
-        //                                                      fingerAngleLerpDuration);
-        //         fingerAngleVelocities[finger] = angleVelocity;
-        //         if (handedness == Handedness.Left)
-        //         {
-        //             FingerController.Instance.leftThumbGripPercentage = handIK.leftIndexGripPercentage; // ((Mathf.Clamp(leftAngle, minThumb, maxThumb) - minThumb) / (maxThumb - minThumb));
-        //         }
-        //         else
-        //         {
-        //             handIK.rightThumbGripPercentage = handIK.rightIndexGripPercentage;
-        //         }
-        //         break;
-        //     case FingerType.Index:
-        //         SetFingerPercentage(ref fingerPercentages[finger],
-        //                             ref handIK.rightIndexGripPercentage,
-        //                             handedness,
-        //                             angle,
-        //                             minIndex,
-        //                             maxIndex,
-        //                             ref leftIndexAngleVelocity,
-        //                             ref rightIndexAngleVelocity);
-        //         break;
-        //     case FingerType.Middle:
-        //         SetFingerPercentage(ref handIK.leftMiddleGripPercentage,
-        //                              ref handIK.rightMiddleGripPercentage,
-        //                              handedness,
-        //                              angle,
-        //                              minMiddle,
-        //                              maxMiddle,
-        //                              ref leftMiddleAngleVelocity,
-        //                              ref rightMiddleAngleVelocity);
-        //         break;
-        //     case FingerType.Ring:
-        //         SetFingerPercentage(ref handIK.leftRingGripPercentage,
-        //                              ref handIK.rightRingGripPercentage,
-        //                              handedness,
-        //                              angle,
-        //                              minRing,
-        //                              maxRing,
-        //                              ref leftRingAngleVelocity,
-        //                              ref rightRingAngleVelocity);
-        //         break;
-        //     case FingerType.Little:
-        //         SetFingerPercentage(ref handIK.leftPinkyGripPercentage,
-        //                              ref handIK.rightPinkyGripPercentage,
-        //                              handedness,
-        //                              angle,
-        //                              minPinky,
-        //                              maxPinky,
-        //                              ref leftPinkyAngleVelocity,
-        //                              ref rightPinkyAngleVelocity);
-        //         break;
-        //     default:
-        //         break;
-        // }
     }
 }

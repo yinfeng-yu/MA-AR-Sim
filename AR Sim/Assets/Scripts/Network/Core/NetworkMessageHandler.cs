@@ -120,26 +120,29 @@ public class NetworkMessageHandler : MonoBehaviour
 
                 if (command.handedness == Handedness.Left)
                 {
-                    if (ControlModeManager.Instance.currentControlMode == ControlMode.SmartphonePointer)
-                    {
-                        if (!command.isGrab) FingerController.Instance.isLeftGrab = !FingerController.Instance.isLeftGrab;
-                    }
-                    else
-                    {
-                        FingerController.Instance.isLeftGrab = command.isGrab;
-                    }
-                    
+                    // if (ControlModeManager.Instance.currentControlMode == ControlMode.SmartphonePointer)
+                    // {
+                    //     if (!command.isGrab) FingerController.Instance.isLeftGrab = !FingerController.Instance.isLeftGrab;
+                    // }
+                    // else
+                    // {
+                    //     FingerController.Instance.isLeftGrab = command.isGrab;
+                    // }
+
+                    if (!command.isGrab) FingerController.Instance.isLeftGrab = !FingerController.Instance.isLeftGrab;
                 }
                 else if (command.handedness == Handedness.Right)
                 {
-                    if (ControlModeManager.Instance.currentControlMode == ControlMode.SmartphonePointer)
-                    {
-                        if (!command.isGrab) FingerController.Instance.isRightGrab = !FingerController.Instance.isRightGrab;
-                    }
-                    else
-                    {
-                        FingerController.Instance.isRightGrab = command.isGrab;
-                    }
+                    // if (ControlModeManager.Instance.currentControlMode == ControlMode.SmartphonePointer)
+                    // {
+                    //     if (!command.isGrab) FingerController.Instance.isRightGrab = !FingerController.Instance.isRightGrab;
+                    // }
+                    // else
+                    // {
+                    //     FingerController.Instance.isRightGrab = command.isGrab;
+                    // }
+
+                    if (!command.isGrab) FingerController.Instance.isRightGrab = !FingerController.Instance.isRightGrab;
                 }
 
                 break;

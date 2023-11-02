@@ -17,7 +17,7 @@ namespace Mediapipe.Unity.Tutorial
         [SerializeField] private int _fps;
 
 
-        [SerializeField] private int _maxNumHands;
+        private int _maxNumHands = 1;
 
         private CalculatorGraph _graph;
         private ResourceManager _resourceManager;
@@ -28,8 +28,11 @@ namespace Mediapipe.Unity.Tutorial
         private Texture2D _outputTexture;
         private Color32[] _outputPixelData;
 
+        public Transform handSkeleton;
         public Transform leftHandSkeleton;
         public Transform rightHandSkeleton;
+
+        Vector3[] handPointsTranslations = new Vector3[21];
 
         public Transform[] leftHandPoints;
         Vector3[] leftHandPointsTranslations = new Vector3[21];
@@ -38,6 +41,8 @@ namespace Mediapipe.Unity.Tutorial
         public Transform[] rightHandPoints;
         Vector3[] rightHandPointsTranslations = new Vector3[21];
         public Transform[] rightHandLines;
+
+        public float handDistanceRatio = 0.1f;
 
         /// <summary>
         /// The palm length as reference
@@ -52,27 +57,37 @@ namespace Mediapipe.Unity.Tutorial
         /// <summary>
         /// The distance from the camera to the hand
         /// </summary>
+        public float handDistance;
         public float leftHandDistance;
         public float rightHandDistance;
 
         /// <summary>
         /// The scale of the tracked palm. Used to calculate the hand distances.
         /// </summary>
+        float handScale;
         float leftHandScale;
         float rightHandScale;
 
         /// <summary>
         /// The wrist position
         /// </summary>
+        public Vector3 handRootTranslation;
         public Vector3 leftHandRootTranslation;
         public Vector3 rightHandRootTranslation;
 
+
+        public float handDistanceScale = 0.2f;
+        public Vector2 handRootScreenPos;
 
         public float leftHandDistanceScale = 0.2f;
         public Vector2 leftHandRootScreenPos;
 
         public float rightHandDistanceScale = 0.2f;
         public Vector2 rightHandRootScreenPos;
+
+        public Vector3 palmNorm;
+        public Vector3 palmForward;
+        public Vector3 palmRight;
 
         public Vector3 leftPalmNorm;
         public Vector3 leftPalmForward;
@@ -238,6 +253,9 @@ namespace Mediapipe.Unity.Tutorial
 
                 yield return new WaitForEndOfFrame();
 
+                // We give up tracking both hand at the same time, as its performance is very inconsistent.
+                // The following part commented out is for tracking both hands
+                /*
                 if (handednessStream.TryGetNext(out var handednesses))
                 {
                     if (handednesses.Count > 0)
@@ -249,12 +267,9 @@ namespace Mediapipe.Unity.Tutorial
                             h += handedness;
                             h += " ";
                         }
-                        // string h = handednesses.Count == 1 ? handednesses[0].ToString() : handednesses[0].ToString() + ", " + handednesses[1].ToString();
-                        // Debug.Log($"handedness count = {handednesses.Count}, handedness: {h}");
-                        // Debug.Log($"handedness: {h}");
                     }
                 }
-
+                */
                 // TrackSingleHand(ref handLandmarksStream, "Left");
                 // TrackSingleHand(ref handLandmarksStream, "Right");
 
@@ -263,16 +278,86 @@ namespace Mediapipe.Unity.Tutorial
                     // Debug.Log("detected");
                     if (handLandmarks != null && handLandmarks.Count > 0)
                     {
-                        bool leftHandDetected = false;
-                        bool rightHandDetected = false;
+                        // bool leftHandDetected = false;
+                        // bool rightHandDetected = false;
                         for (int j = 0; j < handLandmarks.Count; j++)
                         {
                             var landmarks = handLandmarks[j];
-                            // For the webcam (the camera resides in the same side of the hands), the handedness is inverted.
-                            string handedness = handednesses[j].Classification.ToString().Contains("Left") ? "Right" : "Left";
-                            // Debug.Log($"handedness: {handedness}");
 
-                            if (handedness == "Left" && !leftHandDetected)
+                            handRootScreenPos = screenRect.GetPoint(landmarks.Landmark[0]);
+                            handRootTranslation = screenRect.GetPoint(landmarks.Landmark[0]) / 100;
+                            for (int i = 0; i < landmarks.Landmark.Count; i++)
+                            {
+                                var landmark = landmarks.Landmark[i];
+                                handPointsTranslations[i] = (screenRect.GetPoint(landmark) / 100) - handRootTranslation;
+                            }
+
+                            // Now the hand landmarks are updated.
+                            handScale = UpdateHandOrientation();
+
+                            for (int i = 0; i < 21; i++)
+                            {
+                                handPointsTranslations[i] *= handScale;
+
+                                handSkeleton.GetComponent<MediaPipeHandTrackingSkeleton>().SetPointLocalPosition(i, handPointsTranslations[i]);
+                            }
+
+                            foreach (var finger in fingers)
+                            {
+                                // if (finger.finger.handedness == Handedness.Left)
+                                // {
+                                //     FingerController.Instance.UpdateFingerAngles(finger.finger, CalculateFingerAngles(finger, handPointsTranslations, palmForward, palmRight));
+                                // }
+                                FingerController.Instance.UpdateFingerAngles(finger.finger, CalculateFingerAngles(finger, handPointsTranslations, palmForward, palmRight));
+                            }
+
+                            handRootTranslation *= handScale;
+                            handDistance = focalLength * handScale * handDistanceScale;
+
+                            // Set the skeleton visual
+                            float videoScreenWidth = 640;
+                            float videoScreenHeight = 480;
+                            float widthSVRatio = UnityEngine.Screen.width / videoScreenWidth;
+                            float heightSVRatio = UnityEngine.Screen.height / videoScreenHeight;
+
+                            float handScreenPosX = widthSVRatio * (videoScreenWidth / 2 + handRootScreenPos[0]);
+                            float handScreenPosY = heightSVRatio * (videoScreenHeight / 2 + handRootScreenPos[1]);
+
+                            // float leftHandScreenPosX = widthSVRatio * (videoScreenWidth / 2 + MediaPipeHandTracking.Instance.leftHandRootScreenPos[0]);
+                            // float leftHandScreenPosY = heightSVRatio * (videoScreenHeight / 2 + MediaPipeHandTracking.Instance.leftHandRootScreenPos[1]);
+                            // 
+                            // float rightHandScreenPosX = widthSVRatio * (videoScreenWidth / 2 + MediaPipeHandTracking.Instance.rightHandRootScreenPos[0]);
+                            // float rightHandScreenPosY = heightSVRatio * (videoScreenHeight / 2 + MediaPipeHandTracking.Instance.rightHandRootScreenPos[1]);
+
+                            Vector3 handWorldPos = Camera.main.ScreenToWorldPoint(
+                                new Vector3(handScreenPosX, handScreenPosY, handDistance * handDistanceRatio)
+                                ) + handRootTranslation;
+
+                            // Vector3 leftHandWorldPos = Camera.main.ScreenToWorldPoint(
+                            //     new Vector3(leftHandScreenPosX, leftHandScreenPosY, MediaPipeHandTracking.Instance.leftHandDistance * handDistanceRatio)
+                            //     ) + MediaPipeHandTracking.Instance.leftHandRootTranslation;
+                            // 
+                            // Vector3 rightHandWorldPos = Camera.main.ScreenToWorldPoint(
+                            //     new Vector3(rightHandScreenPosX, rightHandScreenPosY, MediaPipeHandTracking.Instance.rightHandDistance * handDistanceRatio)
+                            //     ) + MediaPipeHandTracking.Instance.rightHandRootTranslation;
+
+                            try
+                            {
+                                handSkeleton.position = handWorldPos;
+                                handSkeleton.LookAt(handSkeleton.position + Camera.main.transform.forward);
+                            }
+                            catch { }
+
+                            break;
+
+                            // The following part commented out is for tracking both hands
+
+                            /*
+                            // For the overhead webcam (the camera resides on the same side of the hands), the handedness is inverted.
+                            Handedness handedness = handednesses[j].Classification.ToString().Contains("Left") ? Handedness.Right : Handedness.Left;
+
+                         
+                            if (handedness == Handedness.Left && !leftHandDetected)
                             {
                                 // leftHandDetected = true;
                                 leftHandRootScreenPos = screenRect.GetPoint(landmarks.Landmark[0]);
@@ -284,36 +369,35 @@ namespace Mediapipe.Unity.Tutorial
                                     // points[i].transform.localPosition = screenRect.GetPoint(landmark) / 100;
                                     leftHandPointsTranslations[i] = (screenRect.GetPoint(landmark) / 100) - leftHandRootTranslation;
                                 }
-
+                            
                                 // Now the hand landmarks are updated.
                                 leftHandScale = UpdateHandOrientation("Left", leftHandPointsTranslations);
-
+                            
                                 for (int i = 0; i < 21; i++)
                                 {
                                     leftHandPointsTranslations[i] *= leftHandScale;
-
+                            
                                     leftHandPoints[i].transform.localPosition = leftHandPointsTranslations[i];
                                 }
-
+                            
                                 foreach (var finger in fingers)
                                 {
                                     float angle;
                                     if (finger.finger.handedness == Handedness.Left)
                                     {
-                                        // angle = CalculateFingerAngles(finger, leftHandPointsTranslations, leftPalmForward, leftPalmRight)[1];
-                                        // SetFingerPercentage(finger, angle, "Left");
                                         FingerController.Instance.UpdateFingerAngles(finger.finger, CalculateFingerAngles(finger, leftHandPointsTranslations, leftPalmForward, leftPalmRight));
                                     }
                                 }
-
+                            
                                 leftHandRootTranslation *= leftHandScale;
                                 leftHandDistance = focalLength * leftHandScale * leftHandDistanceScale;
-                                UpdateLines(leftHandLines, leftHandPointsTranslations);
-
+                            
+                                // UpdateLines(leftHandLines, leftHandPointsTranslations);
+                            
                                 break;
                             }
-
-                            else if (handedness == "Right" && !rightHandDetected)
+                            
+                            else if (handedness == Handedness.Right && !rightHandDetected)
                             {
                                 // rightHandDetected = true;
                                 rightHandRootScreenPos = screenRect.GetPoint(landmarks.Landmark[0]);
@@ -324,17 +408,17 @@ namespace Mediapipe.Unity.Tutorial
                                     var landmark = landmarks.Landmark[i];
                                     rightHandPointsTranslations[i] = (screenRect.GetPoint(landmark) / 100) - rightHandRootTranslation;
                                 }
-
+                            
                                 // Now the hand landmarks are updated.
                                 rightHandScale = UpdateHandOrientation("Right", rightHandPointsTranslations);
-
+                            
                                 for (int i = 0; i < 21; i++)
                                 {
                                     rightHandPointsTranslations[i] *= rightHandScale;
-
+                            
                                     rightHandPoints[i].transform.localPosition = rightHandPointsTranslations[i];
                                 }
-
+                            
                                 foreach (var finger in fingers)
                                 {
                                     float angle;
@@ -344,13 +428,14 @@ namespace Mediapipe.Unity.Tutorial
                                         // SetFingerPercentage(finger, angle, "Right");
                                     }
                                 }
-
+                            
                                 rightHandRootTranslation *= rightHandScale;
                                 rightHandDistance = focalLength * rightHandScale * rightHandDistanceScale;
-                                UpdateLines(rightHandLines, rightHandPointsTranslations);
-
+                                // UpdateLines(rightHandLines, rightHandPointsTranslations);
+                            
                                 break;
-                            }
+                            } 
+                            */
                         }
                     }
                 }
@@ -360,7 +445,31 @@ namespace Mediapipe.Unity.Tutorial
         }
         
 
-        float UpdateHandOrientation(string handedness, Vector3[] handPointsTranslations)
+        // float UpdateHandOrientation(string handedness, Vector3[] handPointsTranslations)
+        // {
+        //     var trackedPalmLength = Vector3.Distance(handPointsTranslations[5], handPointsTranslations[0]);
+        //     float handScale = palmLength / trackedPalmLength;
+        // 
+        //     Vector3 palmVec1 = handPointsTranslations[5] - handPointsTranslations[0];
+        //     Vector3 palmVec2 = handPointsTranslations[17] - handPointsTranslations[0];
+        // 
+        //     if (handedness == "Left")
+        //     {
+        //         leftPalmNorm = (Vector3.Cross(palmVec1, palmVec2) * (flipPalm ? -1 : 1)).normalized;
+        //         leftPalmForward = (palmVec1 + palmVec2).normalized;
+        //         leftPalmRight = -Vector3.Cross(leftPalmForward, leftPalmNorm);
+        //     }
+        //     else
+        //     {
+        //         rightPalmNorm = (Vector3.Cross(palmVec1, palmVec2) * (flipPalm ? -1 : 1)).normalized;
+        //         rightPalmForward = (palmVec1 + palmVec2).normalized;
+        //         rightPalmRight = -Vector3.Cross(rightPalmForward, rightPalmNorm);
+        //     }
+        // 
+        //     return handScale;
+        // }
+
+        float UpdateHandOrientation()
         {
             var trackedPalmLength = Vector3.Distance(handPointsTranslations[5], handPointsTranslations[0]);
             float handScale = palmLength / trackedPalmLength;
@@ -368,48 +477,49 @@ namespace Mediapipe.Unity.Tutorial
             Vector3 palmVec1 = handPointsTranslations[5] - handPointsTranslations[0];
             Vector3 palmVec2 = handPointsTranslations[17] - handPointsTranslations[0];
 
-            if (handedness == "Left")
-            {
-                leftPalmNorm = (Vector3.Cross(palmVec1, palmVec2) * (flipPalm ? -1 : 1)).normalized;
-                leftPalmForward = (palmVec1 + palmVec2).normalized;
-                leftPalmRight = -Vector3.Cross(leftPalmForward, leftPalmNorm);
-            }
-            else
-            {
-                rightPalmNorm = (Vector3.Cross(palmVec1, palmVec2) * (flipPalm ? -1 : 1)).normalized;
-                rightPalmForward = (palmVec1 + palmVec2).normalized;
-                rightPalmRight = -Vector3.Cross(rightPalmForward, rightPalmNorm);
-            }
+            palmNorm = (Vector3.Cross(palmVec1, palmVec2) * (flipPalm ? -1 : 1)).normalized;
+            palmForward = (palmVec1 + palmVec2).normalized;
+            palmRight = -Vector3.Cross(rightPalmForward, rightPalmNorm);
 
             return handScale;
         }
 
         float[] CalculateFingerAngles(MPFinger finger, Vector3[] handPointsTranslations, Vector3 palmForward, Vector3 palmRight)
         {
-            if (finger.finger.fingerType == FingerType.Thumb)
-            {
-                Vector3 vec1 = handPointsTranslations[2] - handPointsTranslations[0];
-                Vector3 vec2 = handPointsTranslations[5] - handPointsTranslations[0];
-
-                palmForward = (vec1 + vec2).normalized;
-                Vector3 thumbNorm = (Vector3.Cross(vec1, vec2) * (flipPalm ? -1 : 1)).normalized;
-                palmRight = -Vector3.Cross(palmForward, thumbNorm);
-            }
+            // if (finger.finger.fingerType == FingerType.Thumb)
+            // {
+            //     Vector3 vec1 = handPointsTranslations[2] - handPointsTranslations[0];
+            //     Vector3 vec2 = handPointsTranslations[5] - handPointsTranslations[0];
+            // 
+            //     var _palmForward = (vec1 + vec2).normalized;
+            //     Vector3 _thumbNorm = (Vector3.Cross(vec1, vec2) * (flipPalm ? -1 : 1)).normalized;
+            //     palmRight = -Vector3.Cross(palmForward, thumbNorm);
+            // }
 
             var root = finger.root;
             Vector3 finger1 = Vector3.ProjectOnPlane((handPointsTranslations[root + 1] - handPointsTranslations[root]), palmRight);
             Vector3 finger2 = Vector3.ProjectOnPlane((handPointsTranslations[root + 2] - handPointsTranslations[root + 1]), palmRight);
             Vector3 finger3 = Vector3.ProjectOnPlane((handPointsTranslations[root + 3] - handPointsTranslations[root + 2]), palmRight);
-            float angle1 = - Vector3.SignedAngle(finger1, palmForward, palmRight);
-            float angle2 = - Vector3.SignedAngle(finger2, finger1, palmRight);
-            float angle3 = - Vector3.SignedAngle(finger3, finger2, palmRight);
+            float angle1 = Vector3.SignedAngle(finger1, palmForward, palmRight);
+            float angle2 = Vector3.SignedAngle(finger2, finger1, palmRight);
+            float angle3 = Vector3.SignedAngle(finger3, finger2, palmRight);
             // Debug.Log($"angle1: {angle1}, angle2: {angle2}, angle3: {angle3}");
 
-            FingerController.Instance.UpdateFingerAngles(finger.finger, new[] { angle1, angle2, angle3 });
+            // FingerController.Instance.UpdateFingerAngles(finger.finger, new[] { angle1, angle2, angle3 });
             return new[] { angle1, angle2, angle3 };
         }
 
-        
+        public void UpdateLines(Handedness handedness)
+        {
+            if (handedness == Handedness.Left)
+            {
+                UpdateLines(leftHandLines, leftHandPointsTranslations);
+            }
+            else if (handedness == Handedness.Right)
+            {
+                UpdateLines(rightHandLines, rightHandPointsTranslations);
+            }
+        }
 
         void UpdateLines(Transform[] handLines, Vector3[] handPointsTranslations)
         {

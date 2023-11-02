@@ -16,7 +16,12 @@ public class SmartphonePointerControlMode : BaseControlMode
 
     public override void UpdateControlMode(ControlModeManager a_controlModeManager)
     {
-        HandController.Instance.SmartphonePointerMove(HandController.Instance.currentHandedness);
+        HandController.Instance.SmartphonePointerMove();
+        try
+        {
+            Robody.Instance.movement.Steer(RemoteInput.GetDirection());
+        }
+        catch { }
     }
 
     public override void ExitControlMode(ControlModeManager a_controlModeManager)

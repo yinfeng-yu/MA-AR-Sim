@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,7 +11,7 @@ public class UI : MonoBehaviour
         {
             ToastManager.Instance.ShowToast(text, timeout);
         }
-        catch { }
+        catch (Exception e) { Debug.Log(e); }
         
     }
 }

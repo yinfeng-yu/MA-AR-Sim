@@ -10,9 +10,9 @@ public class LightSwitchController : MonoBehaviour
     [SerializeField] private Light[] _controlledLights;
 
     /// <summary>
-    /// Whether light is currently on
+    /// Whether the lights are currently on
     /// </summary>
-    private bool _lightsOn = true;
+    public bool lightsOn = true;
 
     public float triggerDistance = 0.3f;
 
@@ -32,12 +32,12 @@ public class LightSwitchController : MonoBehaviour
         }
     }
 
-    private void SwitchLight()
+    public void SwitchLight()
     {
-        _lightsOn = !_lightsOn;
+        lightsOn = !lightsOn;
         foreach (Light light in _controlledLights)
         {
-            light.enabled = _lightsOn;
+            light.enabled = lightsOn;
         }
     }
 

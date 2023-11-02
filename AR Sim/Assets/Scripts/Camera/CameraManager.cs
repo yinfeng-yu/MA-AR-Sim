@@ -48,11 +48,6 @@ public class CameraManager : MonoBehaviour
 
     private void Update()
     {
-        // if (currentCamera == mainMenuCamera)
-        // {
-        //     currentCamera.transform.position = Camera.main.transform.position;
-        // }
-
         // currentCamera.transform.rotation = Camera.main.transform.rotation;
         fPStreamCamera.transform.rotation = GetFirstPersonCamera().transform.rotation;
         tPStreamCamera.transform.rotation = GetThirdPersonCamera().transform.rotation;
@@ -65,13 +60,15 @@ public class CameraManager : MonoBehaviour
 
     void CameraOrientaionReset()
     {
-        foreach (CameraInfo camInfo in cameraInfos)
-        {
-            if (camInfo.camera != currentCamera)
-            {
-                camInfo.camera.transform.rotation = cameraDic[camInfo.cameraType].initOrientation; // We can use Lerp.
-            }
-        }
+        GetMainMenuCamera().transform.LookAt(Vector3.forward);
+        GetFirstPersonCamera().transform.LookAt(GetFirstPersonCamera().transform.position + Robody.Instance.RobodyTransform.forward);
+        // foreach (CameraInfo camInfo in cameraInfos)
+        // {
+        //     if (camInfo.camera != currentCamera)
+        //     {
+        //         camInfo.camera.transform.rotation = cameraDic[camInfo.cameraType].initOrientation; // We can use Lerp.
+        //     }
+        // }
     }
 
     public void ActivateCamera(CameraType cameraType)
@@ -121,11 +118,6 @@ public class CameraManager : MonoBehaviour
 
     Camera GetMainMenuCamera() 
     { 
-
-        // foreach (var cam in cameraDic.Keys)
-        // {
-        //     Debug.Log(cam);
-        // }
         return cameraDic[CameraType.MainMenu].camera;
     }
     Camera GetFirstPersonCamera() => cameraDic[CameraType.FirstPerson].camera;
