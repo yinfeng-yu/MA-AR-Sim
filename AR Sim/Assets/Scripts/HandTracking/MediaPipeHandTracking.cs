@@ -179,7 +179,7 @@ namespace Mediapipe.Unity.Tutorial
 
             if (WebCamTexture.devices.Length == 0)
             {
-                throw new System.Exception("Web Camera devices are not found");
+                throw new System.Exception("No Web Camera devices detected. Disabling hand tracking.");
             }
             var webCamDevice = WebCamTexture.devices[0];
             _webCamTexture = new WebCamTexture(webCamDevice.name, _width, _height, _fps);

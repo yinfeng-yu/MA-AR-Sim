@@ -26,10 +26,11 @@ public static class NetworkUtilities
 
                 foreach (var item in ip)
                 {
-                    // Debug.Log(item.ToString());
+                    // Debug.Log($"address = {item.ToString()}, family = {item.AddressFamily}");
                     if (item.AddressFamily == AddressFamily.InterNetwork)
                     {
                         _address = item.ToString();
+                        break;
                     }
                 }
 

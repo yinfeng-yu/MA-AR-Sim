@@ -9,12 +9,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class NetworkMessageHandler : MonoBehaviour
+public static class NetworkMessageHandler
 {
-    public void ProcessMessage(string rawMessage, NetworkMessage currentMessage, NetworkTransmitter networkTransmitter)
+    public static void ProcessMessage(string rawMessage, NetworkMessage currentMessage, NetworkTransmitter networkTransmitter)
     {
         // var peers = transmissionManager.GetPeers();
-
         switch ((NetworkMessageType)currentMessage.ty)
         {
             case NetworkMessageType.StreamMessage:
@@ -81,7 +80,7 @@ public class NetworkMessageHandler : MonoBehaviour
         }
     }
 
-    void HandleOperation(Operation operation)
+    static void HandleOperation(Operation operation)
     {
         
         switch (operation.type)
@@ -111,7 +110,7 @@ public class NetworkMessageHandler : MonoBehaviour
         }
     }
 
-    void HandleCommand(Command command)
+    static void HandleCommand(Command command)
     {
         switch (command.type)
         {

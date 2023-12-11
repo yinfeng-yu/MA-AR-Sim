@@ -5,58 +5,10 @@ using UnityEngine;
 
 public enum NetworkMessageType
 {
-    GlobalStringsRequestMessage,
-    GlobalFloatsRequestMessage,
-    GlobalBoolsRequestMessage,
-    GlobalVector2RequestMessage,
-    GlobalVector3RequestMessage,
-    GlobalVector4RequestMessage,
     HeartbeatMessage,
     ConfirmedMessage,
     AwakeMessage,
-    DespawnMessage,
-    GlobalBoolChangedMessage,
-    GlobalBoolsRecapMessage,
-    GlobalFloatChangedMessage,
-    GlobalFloatsRecapMessage,
-    GlobalStringChangedMessage,
-    GlobalStringsRecapMessage,
-    GlobalVector2ChangedMessage,
-    GlobalVector2RecapMessage,
-    GlobalVector3ChangedMessage,
-    GlobalVector3RecapMessage,
-    GlobalVector4ChangedMessage,
-    GlobalVector4RecapMessage,
-    OnDisabledMessage,
-    OnEnabledMessage,
-    OwnershipTransferenceDeniedMessage,
-    OwnershipTransferenceGrantedMessage,
-    OwnershipTransferenceRequestMessage,
-    SpawnMessage,
-    SpawnRecapMessage,
-    TransformSyncMessage,
-    BoolArrayMessage,
-    BoolMessage,
-
-    ColorArrayMessage,
-    ColorMessage,
-    FloatArrayMessage,
-
-    PoseArrayMessage,
-    PoseMessage,
-    QuaternionArrayMessage,
-    RPCMessage,
-    StringArrayMessage,
-    StringMessage,
-    Vector2ArrayMessage,
-    Vector2Message,
-    Vector3ArrayMessage,
-
-    Vector4ArrayMessage,
-    Vector4Message,
-    SpatialAlignmentMessage,
-
-    StreamRequestMessage,
+    
     StreamMessage,
     MoveRequestMessage,
     TransformMessage,
@@ -72,7 +24,7 @@ public enum NetworkMessageType
     NotificationMessage,
 }
 
-
+public enum NetworkAudience { SinglePeer, KnownPeers, NetworkBroadcast };
 public class NetworkMessage : Message
 {
     // Public Variables (truncated to reduce packet size):
@@ -154,7 +106,7 @@ public class NetworkMessage : Message
         ti = Math.Round(Time.realtimeSinceStartup, 3);
         d = data;
         ty = (short)type;
-        a = ""; // TransmissionManager.Instance.appKey;
+        a = NetworkTransmitter.appKey;
         p = ""; // TransmissionManager.Instance.privateKey;
     }
 

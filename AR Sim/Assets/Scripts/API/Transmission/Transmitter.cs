@@ -4,12 +4,6 @@ using UnityEngine;
 
 public abstract class Transmitter : MonoBehaviour
 {
-    private MessageHandler messageHandler;
-    public MessageHandler MessageHandler
-    {
-        get => messageHandler;
-        set => messageHandler = value;
-    }
 
     // Start is called before the first frame update
     void Start()

@@ -720,7 +720,7 @@ PlayerSettings:
     m_ModelFolderPath: 
     m_PortalFolderPath: 
   luminCert:
-    m_CertPath: E:/Unity Projects/MA-AR-Sim/AR Sim/Certificate/yinfeng_dev.cert
+    m_CertPath: D:/projects/unity/MA/MA-AR-Sim/AR Sim/Certificate/yinfeng_dev.cert
     m_SignPackage: 1
   luminIsChannelApp: 0
   luminVersion:
